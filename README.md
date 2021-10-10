@@ -28,14 +28,24 @@ Application for controlling and viewing video from AVUE PZT camera
     * Orange: ALM5 (input)
 
 ## Presets
-  - 62: Call to turn on and Save to turn off the IR light
-  - 63: wiper on/off
-  - 95: enter main OSD menu (or 9 twice within three secs)
+* 62: Call to turn on and Save to turn off the IR light
+* 63: wiper on/off
+* 95: enter main OSD menu (or 9 twice within three secs)
 
 ## Default settings:
-  - 4800, N, 8, 1
-  - Protocol: Pelco
-  - Dome Address: 1
+* 4800, N, 8, 1
+* Protocol: Pelco
+* Dome Address: 1
+
+## DTech RS422/RS485 USB Dongle
+* idVendor=0403, idProduct=6001, bcdDevice= 6.00
+* FTDI USB Serial Device converter
+* /dev/ttyUSB0
+* install udev rules for USB dongle and reload udevd
+  - sudo cp ./99-dtech-rs422_485.rules /etc/udev/rules.d/
+  - sudo udevadm control --reload-rules
+  - sudo udevadm trigger
+
 
 ## Notes
 * 01-80 Preset: auto-tour, each with 24 presets
