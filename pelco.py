@@ -17,7 +17,7 @@ DEF_BAUDRATE = 4800  #### TODO try 9600
 
 DEF_CAMERA_ADDRESS = 1
 
-DEF_SERIAL_TIMEOUT = 0.1    # serial port timeout (secs)
+DEF_SERIAL_TIMEOUT = 1.0    # serial port timeout (secs)
 
 EXTENDED_COMMAND_MAP = {
     'SetPreset': (0x00, 0x03, 0x00, (0, 255)),  # N.B., Spec limits to (1, 0x20)
@@ -95,7 +95,7 @@ class Pelco():
     TRUTH_TABLE = [(0, 0), (0, 1), (1, 1), (0, 2), (0, 3), None, (1, 2), None, (1, 3)]
 
     def __init__(self, camAddress=DEF_CAMERA_ADDRESS, port=DEF_PORT, baudrate=DEF_BAUDRATE, timeout=DEF_SERIAL_TIMEOUT):
-        self.camAddress = camAddress
+        self.address = camAddress
         self.port = port
         self.baudrate = baudrate
         self.timeout = timeout
@@ -143,7 +143,7 @@ class Pelco():
         indx = 0 if scanMode is None else 4 if scanMode else 2
         indx += 0 if cameraEnable is None else 2 if cameraEnable else 1
         sense, scanCam = Pelco.TRUTH_TABLE[indx]
-        asser sense is not None and scanCam is not None, f"Invalid scanMode/cameraEnable combination"
+        assert sense is not None and scanCam is not None, f"Invalid scanMode/cameraEnable combination"
         cmd1 = ((sense << 7) & 0x80) | \
                ((scanCam << 3) & 0x18) | \
                (0 if iris is None else 0x08 if iris else 0x04) | \
@@ -183,6 +183,8 @@ class Pelco():
 
         vals = self.serial.read(4)
         logging.debug(f"Response: {[hex(x) for x in vals]}")
+        if not vals:  #### TMP TMP TMP
+            return None
         sync, addr, alarms, checksum = struct.unpack("BBBB", vals)
         assert (sync == 0xFF) and (checksum == (sum(vals[1:3]) % 256)), f"Invalid packet: {[hex(x) for x in vals]}"
         return [bool(alarms & (1 << i)) for i in range(0, 8)]
@@ -312,12 +314,15 @@ class Pelco():
         cksm = (self.address + word3 + word4 + word5 + word6) % 256
         cmd = struct.pack("BBBBBBB", 0xFF, self.address, word3, word4, word5, word6, cksm)
         self.serial.write(cmd)
+        logging.debug(f"Send extended command: {[hex(x) for x in cmd]}")
 
         vals = self.serial.read(4)
-        #### FIXME use struct to parse response
-        #### TODO validate response
-        alarms = []
-        return alarms
+        logging.debug(f"Response: {[hex(x) for x in vals]}")
+        if not vals:  #### TMP TMP TMP
+            return None
+        sync, addr, alarms, checksum = struct.unpack("BBBB", vals)
+        assert (sync == 0xFF) and (checksum == (sum(vals[1:3]) % 256)), f"Invalid packet: {[hex(x) for x in vals]}"
+        return [bool(alarms & (1 << i)) for i in range(0, 8)]
 
     @staticmethod
     def validateExtCmd(spec, arg):
@@ -329,6 +334,7 @@ class Pelco():
             else:
                 raise Exception(f"Invalid Extended Command arg: '{arg}' != {spec}")
         elif isinstance(spec, tuple):
+            print("XXXX", type(spec[0]), type(spec[1]), type(arg))
             if arg is None:
                 raise Exception(f"Must provide arg for Extended Command -- spec: {spec}")
             elif arg < spec[0] or arg > spec[1]:
@@ -362,6 +368,10 @@ class Pelco():
 if __name__ == '__main__':
     import time
 
+    logging.basicConfig(level="DEBUG",
+                        format='%(asctime)s %(levelname)-8s %(message)s',
+                        datefmt='%Y-%m-%d %H:%M:%S')
+
     cam = Pelco()
 
     # Extended Command with no args
@@ -374,20 +384,23 @@ if __name__ == '__main__':
 
     # Extended Command with two args
     xPos = 14
-    char = 'A'
+    char = ord('A')
     cam.extendedCommand('WriteChar', xPos, char)
     time.sleep(3)
     cam.extendedCommand('ClearScreen')
 
     # motion at three speeds
+    print("pan and tilt: LOW")
     cam.motion(True, True, Speed.LOW, Speed.LOW)
     time.sleep(3)
     cam.motion(True, True, Speed.STOP, Speed.STOP)
 
-    cam.motion(False, False, Speed.HIGH, Speed.HIGH)
+    print("pan and tilt: NORMAL")
+    cam.motion(False, False, Speed.NORMAL, Speed.NORMAL)
     time.sleep(2)
     cam.motion(False, False, Speed.STOP, Speed.STOP)
 
+    print("pan and tilt: TURBO")
     cam.motion(True, True, Speed.TURBO, Speed.TURBO)
     time.sleep(1)
     cam.motion(True, True, Speed.STOP, Speed.STOP)
@@ -403,3 +416,5 @@ if __name__ == '__main__':
 
     # preset 95: enter main OSD menu (or 9 twice within three secs)
     #### TODO
+
+    cam.motion(True, True, Speed.STOP, Speed.STOP)
