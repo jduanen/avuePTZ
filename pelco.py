@@ -20,9 +20,9 @@ DEF_CAMERA_ADDRESS = 1
 DEF_SERIAL_TIMEOUT = 0.1    # serial port timeout (secs)
 
 EXTENDED_COMMAND_MAP = {
-    'SetPreset': (0x00, 0x03, 0x00, (0, 255)),  # N.B., Spec limits to (1, 20)
-    'ClearPreset': (0x00, 0x05, 0x00, (0, 255)),  # N.B., Spec limits to (1, 20)
-    'GotoPreset': (0x00, 0x07, 0x00, (0, 255)),  # N.B., Spec limits to (1, 20)
+    'SetPreset': (0x00, 0x03, 0x00, (0, 255)),  # N.B., Spec limits to (1, 0x20)
+    'ClearPreset': (0x00, 0x05, 0x00, (0, 255)),  # N.B., Spec limits to (1, 0x20)
+    'GotoPreset': (0x00, 0x07, 0x00, (0, 255)),  # N.B., Spec limits to (1, 0x20)
     'Flip': (0x00, 0x07, 0x00, 21),
     'GotoZeroPan': (0x00, 0x07, 0x00, 22),
     'SetAux': (0x00, 0x09, 0x00, (1, 8)),
@@ -32,7 +32,7 @@ EXTENDED_COMMAND_MAP = {
     'SetZoneEnd': (0x00, 0x13, 0x00, (1, 8)),
     'WriteChar': (0x00, 0x15, (0, 28), (0, 127)),
     'ClearScreen': (0x00, 0x17, 0x00, 0x00),
-    'AlarmACK': (0x00, 0x19, 0x00, (0, 255)),
+    'AlarmACK': (0x00, 0x19, 0x00, (1, 8)),
     'ZoneScanOn': (0x00, 0x1B, 0x00, 0x00),
     'ZoneScanOff': (0x00, 0x1D, 0x00, 0x00),
     'PatternStart': (0x00, 0x1F, 0x00, 0x00),
@@ -65,6 +65,8 @@ EXTENDED_COMMAND_MAP = {
 
 class Speed():
     STOP = 0x00
+    LOW = 0x10  #### FIXME
+    NORMAL = 0x20  #### FIXME
     HIGH = 0x3F
     TURBO = 0xFF
 
@@ -103,12 +105,6 @@ class Pelco():
         self.zoomSpeed = 0
         self.focusSpeed = 0
 
-        self.inQ = Queue()
-        self.receiving = threading.Event()
-        self.receiving.clear()
-        self.closed = False
-        self.receiverThread = threading.Thread(target=self._receiver)
-
         self.serial = None
         try:
             # N.B. Defaults to 8-N-1, no (HW or SW) flow control
@@ -119,64 +115,8 @@ class Pelco():
         self.open = True
         logging.debug(f"Opened {port} at {baudrate}")
 
-    def __enter__(self):
-        #### FIXME turn on camera and set to manual scan
-        print("ENTER")
-
-    def __exit__(self, type, value, tb):
-        #### FIXME
-        self.shutdown()
-
-    def start(self):
-        if self.receiving.isSet():
-            logging.debug("Receiver thread already running")
-        else:
-            self.receiving.set()
-            self.receiverThread.start()
-            logging.debug("Starting receiver thread")
-
-    def shutdown(self, blocking=True):
-        """Tell input thread to shutdown.
-
-          Have to wait until 'closed' is set to be sure thread is shutdown.
-        """
-        if self.closed:
-            logging.debug("Shutdown: already closed")
-        self.receiving.clear()
-        if blocking:
-            self.waitForShutdown()
-
-    def isShutdown(self):
-        return self.closed
-
-    def waitForShutdown(self):
-        while not self.closed:
-            time.sleep(1)
-
-    def _receiver(self):
-        """Receives response packets and enqueues them on the input queue
-
-          Expects packets of ? bytes.
-
-          Loops until told to shutdown by the 'receiving' event.
-          Puts a final None value on the inputQ and indicates that the input
-           thread is done.
-        """
-        while self.receiving.isSet():
-            assert self.open, f"Serial port not open: {self.port}"
-            packet = bytes([])
-            while len(packet) < PACKET_SIZE: #### FIXME
-                val = self.serial.read(1)
-                packet += val
-            if packet:
-                try:
-                    logging.debug(f"Inputs: {packet}")  #### FIXME print as hex values
-                    self.inputQ.put_nowait(packet)
-                except Exception as ex:
-                    logging.error(f"Input queue full, discarding input and shutting down: {ex}")
-                    self.receiving.clear()
-        self.inputQ.put(None)
-        self.closed = True
+        self.cameraOn()
+        self.motion(Speed.STOP, Speed.STOP)
 
     def _makeCommands1_2(self, scanMode=None, cameraEnable=None, iris=None, focus=None, zoom=None, pan=None, tilt=None):
         """Create commands 1 and 2 for the standard command format message
@@ -223,7 +163,11 @@ class Pelco():
             cmds1_2: a tuple of bytes containing command1 and command2 for standard commands
             panSpeed: optional Speed value that selects pan speed, or leaves as is if None
             tiltSpeed: optional Speed value that selects tilt speed, or leaves as is if None
+
+          Returns: list of bools representing state of alarms where True means
+                    the alarm is active -- result[0] == Alarm1, result[7] == Alarm8
         """
+        self.serial.reset_input_buffer()
         if panSpeed == None:
             panSpeed = self.panSpeed
         assert panSpeed == Speed.TURBO or (panSpeed >= Speed.STOP and panSpeed <= Speed.HIGH), f"Invalid Pan Speed: {panSpeed}"
@@ -237,15 +181,25 @@ class Pelco():
         self.serial.write(cmd)
         logging.debug(f"Send command: {[hex(x) for x in cmd]}")
 
+        vals = self.serial.read(4)
+        logging.debug(f"Response: {[hex(x) for x in vals]}")
+        sync, addr, alarms, checksum = struct.unpack("BBBB", vals)
+        assert (sync == 0xFF) and (checksum == (sum(vals[1:3]) % 256)), f"Invalid packet: {[hex(x) for x in vals]}"
+        return [bool(alarms & (1 << i)) for i in range(0, 8)]
+
     def cameraOn(self):
         """Issue command to turn camera on
+
+          Returns: list of bool alarm indications
         """
-        self._sendStandardCommand(self._makeCommands1_2(cameraEnable=True))
+        return self._sendStandardCommand(self._makeCommands1_2(cameraEnable=True))
 
     def cameraOff(self):
         """Issue command to turn camera off
+
+          Returns: list of bool alarm indications
         """
-        self._sendStandardCommand(self._makeCommands1_2(cameraEnable=False))
+        return self._sendStandardCommand(self._makeCommands1_2(cameraEnable=False))
 
     def motion(self, pan, tilt, panSpeed=None, tiltSpeed=None):
         """Move camera in indicated direction(s) with the given speed(s)
@@ -253,8 +207,10 @@ class Pelco():
           Inputs:
             pan: bool if True pan right, if False pan left, if None don't pan
             tilt: bool if True tilt up, if False tilt down, if None don't tilt
+
+          Returns: list of bool alarm indications
         """
-        self._sendStandardCommand(self._makeCommands1_2(scanMode=False, pan=pan, tilt=tilt), panSpeed, tiltSpeed)
+        return self._sendStandardCommand(self._makeCommands1_2(scanMode=False, pan=pan, tilt=tilt), panSpeed, tiltSpeed)
 
     def setZoomSpeed(self, speed):
         """Set zoom speed to given value (between 0 and 3)
@@ -271,11 +227,13 @@ class Pelco():
           Inputs:
             zoom: bool where True means to zoom in (tele) and False is zoom out (wide)
             speed: optional int between 0 and 3 indicating increasing speed, None means leave as is
+
+          Returns: list of bool alarm indications
         """
         if speed:
             self.setZoomSpeed(speed)
             self.zoomSpeed = speed
-        self._sendStandardCommand(self._makeCommands1_2(zoom=zoomDir))
+        return self._sendStandardCommand(self._makeCommands1_2(zoom=zoomDir))
 
     def setFocusSpeed(self, speed):
         """Set focus speed to given value (between 0 and 3)
@@ -292,11 +250,13 @@ class Pelco():
           Inputs:
             focusDir: bool where True means to focus near and False is focus far
             speed: optional int between 0 and 3 indicating increasing speed
+
+          Returns: list of bool alarm indications
         """
         if speed:
             self.setFocusSpeed(speed)
             self.focusSpeed = speed
-        self._sendStandardCommand(self._makeCommands1_2(focus=focusDir))
+        return self._sendStandardCommand(self._makeCommands1_2(focus=focusDir))
 
     def iris(self, irisDir):
         """Switch to manual iris and open/close iris
@@ -304,8 +264,10 @@ class Pelco():
           Inputs:
             focusDir: bool where True means to focus near and False is focus far
             speed: optional int between 0 and 3 indicating increasing speed
+
+          Returns: list of bool alarm indications
         """
-        self._sendStandardCommand(self._makeCommands1_2(iris=irisDir))
+        return self._sendStandardCommand(self._makeCommands1_2(iris=irisDir))
 
     def preset(self, presetID, presetCmd):
         """Issue a preset command that either sets, clears, or calls a given
@@ -320,23 +282,20 @@ class Pelco():
         assert presetID >= 0 and presetID <= 0xFF, f"Invalid Preset ID: {presetID}"
         self.extendedCommand(presetCmd, arg2=presetID)
 
-    def QueryPanPosition(self):
-        """????
-        """
-        pos = ????
-        return pos
+    def query(self):
+        """Issue Query command and return results
 
-    def QueryTiltPosition(self):
-        """????
+          Returns: device address and part number
         """
-        pos = ????
-        return pos
+        self.serial.reset_input_buffer()
+        cksm = (self.address + 0x00 + 0x45) % 256
+        cmd = struct.pack("BBBBBBB", 0xFF, self.address, 0x00, 0x45, 0x00, 0x00, cksm)
+        self.serial.write(cmd)
 
-    def QueryZoomPosition(self):
-        """????
-        """
-        pos = ????
-        return pos
+        vals = self.serial.read(5)
+        sync, address, partNumber, checksum = struct.unpack("BBHB", vals)
+        assert (sync == 0xFF) and (checksum == (sum(vals[1:4]) % 256)), f"Invalid packet: {[hex(x) for x in vals]}"
+        return address, partNumber
 
     def _sendExtendedCommand(self, word3, word4, word5, word6):
         """Compose an extended command and send it to the camera
@@ -349,9 +308,16 @@ class Pelco():
             word5: ?
             word6: ?
         """
+        self.serial.reset_input_buffer()
         cksm = (self.address + word3 + word4 + word5 + word6) % 256
         cmd = struct.pack("BBBBBBB", 0xFF, self.address, word3, word4, word5, word6, cksm)
         self.serial.write(cmd)
+
+        vals = self.serial.read(4)
+        #### FIXME use struct to parse response
+        #### TODO validate response
+        alarms = []
+        return alarms
 
     @staticmethod
     def validateExtCmd(spec, arg):
@@ -379,13 +345,15 @@ class Pelco():
             command: string name of extended command
             arg1: optional first int value to be given with extended command
             arg2: optional second int value to be given with extended command
+
+          Returns: list of bool alarm indications
         """
         assert command in EXTENDED_COMMAND_MAP, f"Invalid Extended Command: {command}"
         specs = EXTENDED_COMMAND_MAP[command]
-        self._sendExtendedCommand(specs[0],
-                                  specs[1],
-                                  Pelco.validateExtCmd(specs[2], arg1),
-                                  Pelco.validateExtCmd(specs[3], arg2))
+        return self._sendExtendedCommand(specs[0],
+                                         specs[1],
+                                         Pelco.validateExtCmd(specs[2], arg1),
+                                         Pelco.validateExtCmd(specs[3], arg2))
 
 
 #
@@ -410,3 +378,28 @@ if __name__ == '__main__':
     cam.extendedCommand('WriteChar', xPos, char)
     time.sleep(3)
     cam.extendedCommand('ClearScreen')
+
+    # motion at three speeds
+    cam.motion(True, True, Speed.LOW, Speed.LOW)
+    time.sleep(3)
+    cam.motion(True, True, Speed.STOP, Speed.STOP)
+
+    cam.motion(False, False, Speed.HIGH, Speed.HIGH)
+    time.sleep(2)
+    cam.motion(False, False, Speed.STOP, Speed.STOP)
+
+    cam.motion(True, True, Speed.TURBO, Speed.TURBO)
+    time.sleep(1)
+    cam.motion(True, True, Speed.STOP, Speed.STOP)
+
+    # zoom at three speeds
+    #### TODO
+
+    # preset 62: Call to turn on and Save to turn off the IR light
+    #### TODO
+
+    # preset 63: wiper on/off
+    #### TODO
+
+    # preset 95: enter main OSD menu (or 9 twice within three secs)
+    #### TODO
