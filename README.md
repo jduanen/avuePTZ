@@ -199,3 +199,5 @@ Application for controlling and viewing video from AVUE G50IR-WB36N PZT camera
 * make a tool that allows CLI-based control of the camera
 * create separate tool to stream the camera's video
 * create a (flask-based) web server that provides the camera's control functions
+* add methods for OSD menu controls to the AVUE object
+
