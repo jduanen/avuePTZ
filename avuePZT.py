@@ -20,11 +20,16 @@ from Pelco import *
 DEFAULTS = {
     'logLevel': "INFO",  #"DEBUG"  #"WARNING"
     'address': 1,
-    'port': "dev/ttyUSB0",
+    'port': "/dev/ttyUSB0",
     'baudrate': 4800
 }
 
 BAUD_RATES = (4800, 9600)
+
+PAN_OVERHEAD_TIME = ?
+PAN_SECS_PER_DEGREE = ?
+TILT_OVERHEAD_TIME = ?
+TILT_SECS_PER_DEGREE = ?
 
 
 class AVUE(Pelco):
@@ -33,8 +38,6 @@ class AVUE(Pelco):
     def __init__(self, address, port, baudrate):
         """????
         """
-        #### TODO set camera to 9600 baud
-
         super().__init__(address, port, baudrate)
 
         #### TODO consider removing extended commands
@@ -55,19 +58,19 @@ class AVUE(Pelco):
             speed: Speed value that defines the speed of the pan operation
         """
         self.motion(True, None, panSpeed=speed)
-        time.sleep((SECS_PER_DEGREE_PAN * degrees) - PAN_OVERHEAD_TIME)
+        time.sleep((PAN_SECS_PER_DEGREE * degrees) - PAN_OVERHEAD_TIME)
         self.stop()
 
     def tilt(self, direction, degrees, speed=Speed.NORMAL):
         """Pan the camera a given number of degrees either CW or CCW
 
           Inputs:
-            direction: bool that turns the camera CW if True and CCW if False
-            degrees: int that indicates the number of degrees to pan the camera
-            speed: Speed value that defines the speed of the pan operation
+            direction: bool that tilts the camera up if True and down if False
+            degrees: int that indicates the number of degrees to tilt the camera
+            speed: Speed value that defines the speed of the tilt operation
         """
-        self.motion(True, None, panSpeed=speed)
-        time.sleep((SECS_PER_DEGREE_PAN * degrees) - PAN_OVERHEAD_TIME)
+        self.motion(None, True, tiltSpeed=speed)
+        time.sleep((TILT_SECS_PER_DEGREE * degrees) - TILT_OVERHEAD_TIME)
         self.stop()
 
     def azimuth(self, degrees):
@@ -114,10 +117,16 @@ def run(options):
         signal.signal(sig, shutdownHandler)
     '''
     cam = AVUE(options.address, options.port, options.baudrate)
-    cam.motion(True, True, Speed.NORMAL, Speed.NORMAL)
-    import time #### TMP TMP TMP
-    time.sleep(2)
-    cam.stop()
+
+    #### TMP TMP TMP
+    if True:
+        import time
+        cam.motion(True, True, Speed.SLOW, Speed.SLOW)
+        time.sleep(2)
+        cam.stop()
+
+        cam.
+
     sys.exit(0)
 
 def getOpts():
