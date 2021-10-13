@@ -1,11 +1,12 @@
-'''
+"""
 Library for Pelco-D Protocol control of a PZT camera mount
-'''
+"""
 
 import logging
 from queue import Queue
 import struct
 import threading
+import time
 
 from parse import parse
 import serial
@@ -17,7 +18,7 @@ DEF_BAUDRATE = 4800  #### TODO try 9600
 
 DEF_CAMERA_ADDRESS = 1
 
-DEF_SERIAL_TIMEOUT = 1.0    # serial port timeout (secs)
+DEF_SERIAL_TIMEOUT = 0.1    # serial port timeout (secs)
 
 EXTENDED_COMMAND_MAP = {
     'SetPreset': (0x00, 0x03, 0x00, (0, 255)),  # N.B., Spec limits to (1, 0x20)
@@ -62,19 +63,19 @@ EXTENDED_COMMAND_MAP = {
     'AutoIrisPeak_1': (0x01, 0x43, (0,255), (0,255))
 }
 
+PRESET_COMMANDS = {
+    'Set': "SetPreset",
+    'Clear': "ClearPreset",
+    'Call': "GotoPreset"
+}
+
 
 class Speed():
-    STOP = 0x00
-    LOW = 0x10  #### FIXME
+    SLOW = 0x00
+    MEDIUM = 0x10  #### FIXME
     NORMAL = 0x20  #### FIXME
     HIGH = 0x3F
     TURBO = 0xFF
-
-
-class PresetCommands():
-    SET = 'SetPreset'
-    CLEAR = 'ClearPreset'
-    CALL = 'GotoPreset'
 
 
 class Pelco():
@@ -100,10 +101,10 @@ class Pelco():
         self.baudrate = baudrate
         self.timeout = timeout
 
-        self.panSpeed = 0
-        self.tiltSpeed = 0
-        self.zoomSpeed = 0
-        self.focusSpeed = 0
+        self.panSpeed = Speed.SLOW
+        self.tiltSpeed = Speed.SLOW
+        self.zoomSpeed = Speed.SLOW
+        self.focusSpeed = Speed.SLOW
 
         self.serial = None
         try:
@@ -116,7 +117,7 @@ class Pelco():
         logging.debug(f"Opened {port} at {baudrate}")
 
         self.cameraOn()
-        self.motion(Speed.STOP, Speed.STOP)
+        self.stop()
 
     def _makeCommands1_2(self, scanMode=None, cameraEnable=None, iris=None, focus=None, zoom=None, pan=None, tilt=None):
         """Create commands 1 and 2 for the standard command format message
@@ -163,31 +164,20 @@ class Pelco():
             cmds1_2: a tuple of bytes containing command1 and command2 for standard commands
             panSpeed: optional Speed value that selects pan speed, or leaves as is if None
             tiltSpeed: optional Speed value that selects tilt speed, or leaves as is if None
-
-          Returns: list of bools representing state of alarms where True means
-                    the alarm is active -- result[0] == Alarm1, result[7] == Alarm8
         """
         self.serial.reset_input_buffer()
         if panSpeed == None:
             panSpeed = self.panSpeed
-        assert panSpeed == Speed.TURBO or (panSpeed >= Speed.STOP and panSpeed <= Speed.HIGH), f"Invalid Pan Speed: {panSpeed}"
+        assert panSpeed == Speed.TURBO or (panSpeed >= Speed.SLOW and panSpeed <= Speed.HIGH), f"Invalid Pan Speed: {panSpeed}"
         self.panSpeed = panSpeed
         if tiltSpeed == None:
             tiltSpeed = self.tiltSpeed
-        assert tiltSpeed == Speed.TURBO or (tiltSpeed >= Speed.STOP and tiltSpeed <= Speed.HIGH), f"Invalid Tilt Speed: {tiltSpeed}"
+        assert tiltSpeed == Speed.TURBO or (tiltSpeed >= Speed.SLOW and tiltSpeed <= Speed.HIGH), f"Invalid Tilt Speed: {tiltSpeed}"
         self.tiltSpeed = tiltSpeed
         cksm = (self.address + cmds1_2[0] + cmds1_2[1] + panSpeed + tiltSpeed) % 256
         cmd = struct.pack("BBBBBBB", 0xFF, self.address, *cmds1_2, panSpeed, tiltSpeed, cksm)
         self.serial.write(cmd)
         logging.debug(f"Send command: {[hex(x) for x in cmd]}")
-
-        vals = self.serial.read(4)
-        logging.debug(f"Response: {[hex(x) for x in vals]}")
-        if not vals:  #### TMP TMP TMP
-            return None
-        sync, addr, alarms, checksum = struct.unpack("BBBB", vals)
-        assert (sync == 0xFF) and (checksum == (sum(vals[1:3]) % 256)), f"Invalid packet: {[hex(x) for x in vals]}"
-        return [bool(alarms & (1 << i)) for i in range(0, 8)]
 
     def cameraOn(self):
         """Issue command to turn camera on
@@ -214,14 +204,10 @@ class Pelco():
         """
         return self._sendStandardCommand(self._makeCommands1_2(scanMode=False, pan=pan, tilt=tilt), panSpeed, tiltSpeed)
 
-    def setZoomSpeed(self, speed):
-        """Set zoom speed to given value (between 0 and 3)
-
-          Inputs:
-            speed: int between 0 and 3 indicating increasing speed
+    def stop(self):
+        """Stop all motion, zoom, and focus operations in progress
         """
-        assert speed >= 0 and speed <= 3, f"Invalid zoom speed: {speed}"
-        self.extendedCommand('ZoomSpeed', arg2=speed)
+        return self._sendStandardCommand((0x00, 0x00))
 
     def zoom(self, zoomDir, speed=None):
         """Zoom in (tele)/out (wide) at (optional) speed
@@ -236,15 +222,6 @@ class Pelco():
             self.setZoomSpeed(speed)
             self.zoomSpeed = speed
         return self._sendStandardCommand(self._makeCommands1_2(zoom=zoomDir))
-
-    def setFocusSpeed(self, speed):
-        """Set focus speed to given value (between 0 and 3)
-
-          Inputs:
-            speed: int between 0 and 3 indicating increasing speed
-        """
-        assert speed >= 0 and speed <= 3, f"Invalid focus speed: {speed}"
-        self.extendedCommand('FocusSpeed', arg2=speed)
 
     def focus(self, focusDir, speed=None):
         """Switch to manual focus and focus near/far at (optional) speed
@@ -271,34 +248,6 @@ class Pelco():
         """
         return self._sendStandardCommand(self._makeCommands1_2(iris=irisDir))
 
-    def preset(self, presetID, presetCmd):
-        """Issue a preset command that either sets, clears, or calls a given
-            preset.
-
-          Inputs:
-            presetID: 8b int identifying a preset
-            presetCmd: PresetCommands value indicating SET, CLEAR, or CALL
-                       command type
-        """
-        assert isinstance(presetCmd, PresetCommands), "Invalid Present Command"
-        assert presetID >= 0 and presetID <= 0xFF, f"Invalid Preset ID: {presetID}"
-        self.extendedCommand(presetCmd, arg2=presetID)
-
-    def query(self):
-        """Issue Query command and return results
-
-          Returns: device address and part number
-        """
-        self.serial.reset_input_buffer()
-        cksm = (self.address + 0x00 + 0x45) % 256
-        cmd = struct.pack("BBBBBBB", 0xFF, self.address, 0x00, 0x45, 0x00, 0x00, cksm)
-        self.serial.write(cmd)
-
-        vals = self.serial.read(5)
-        sync, address, partNumber, checksum = struct.unpack("BBHB", vals)
-        assert (sync == 0xFF) and (checksum == (sum(vals[1:4]) % 256)), f"Invalid packet: {[hex(x) for x in vals]}"
-        return address, partNumber
-
     def _sendExtendedCommand(self, word3, word4, word5, word6):
         """Compose an extended command and send it to the camera
 
@@ -316,14 +265,6 @@ class Pelco():
         self.serial.write(cmd)
         logging.debug(f"Send extended command: {[hex(x) for x in cmd]}")
 
-        vals = self.serial.read(4)
-        logging.debug(f"Response: {[hex(x) for x in vals]}")
-        if not vals:  #### TMP TMP TMP
-            return None
-        sync, addr, alarms, checksum = struct.unpack("BBBB", vals)
-        assert (sync == 0xFF) and (checksum == (sum(vals[1:3]) % 256)), f"Invalid packet: {[hex(x) for x in vals]}"
-        return [bool(alarms & (1 << i)) for i in range(0, 8)]
-
     @staticmethod
     def validateExtCmd(spec, arg):
         """????
@@ -334,7 +275,6 @@ class Pelco():
             else:
                 raise Exception(f"Invalid Extended Command arg: '{arg}' != {spec}")
         elif isinstance(spec, tuple):
-            print("XXXX", type(spec[0]), type(spec[1]), type(arg))
             if arg is None:
                 raise Exception(f"Must provide arg for Extended Command -- spec: {spec}")
             elif arg < spec[0] or arg > spec[1]:
@@ -361,11 +301,157 @@ class Pelco():
                                          Pelco.validateExtCmd(specs[2], arg1),
                                          Pelco.validateExtCmd(specs[3], arg2))
 
+    def preset(self, presetCmd, presetID):
+        """Issue a preset command that either sets, clears, or calls a given
+            preset.
+
+          Inputs:
+            presetCmd: string indicating command type (i.e., 'Set', 'Clear', or 'Call')
+            presetID: 8b int identifying a preset
+        """
+        assert presetCmd in PRESET_COMMANDS, f"Invalid Present Command type: {presetCmd} not in {list(PRESET_COMMANDS.keys())}"
+        assert presetID >= 0 and presetID <= 0xFF, f"Invalid Preset ID: {presetID}"
+        self.extendedCommand(PRESET_COMMANDS[presetCmd], arg2=presetID)
+
+    def auxiliary(self, set, num):
+        """Set or clear a given auxiliary function
+
+          Inputs:
+            set: bool that sets the given aux function if True and clears it if False
+            num: int that indicates which of the eight (1-8) aux functions to set/clear
+        """
+        assert num > 0 and num <= 8, f"Invalid aux number '{num}', must be between 1-8, inclusive"
+        self.extendedCommand('SetAux' if set else 'ClearAux', arg2=num)
+
+    def setZone(self, startEnd, num):
+        """Set the start or end of a given zone
+
+          Inputs:
+            startEnd: bool that sets the start of the given zone if True and the end if False
+            num: int that indicates which of the eight (1-8) zones to set
+        """
+        assert num > 0 and num <= 8, f"Invalid zone number '{num}', must be between 1-8, inclusive"
+        self.extendedCommand('SetZoneStart' if startEnd else 'SetZoneEnd', arg2=num)
+
+    def alarmAck(self, num):
+        """Acknowledge a given alarm
+
+          Inputs:
+            num: int that indicates which of the eight (1-8) alarms to ack
+        """
+        assert num > 0 and num <= 8, f"Invalid alarm number '{num}', must be between 1-8, inclusive"
+        self.extendedCommand('AlarmACK', arg2=num)
+
+    def zoneScan(self, onOff):
+        """Turn zone scanning mode on/off
+
+          Inputs:
+            onOff: bool that turns zone scan on if True and off if False
+        """
+        self.extendedCommand('ZoneScanOn' if onOff else 'ZoneScanOff')
+
+    def setPattern(self, startEnd):
+        """Set the start or end of a motion pattern to be memorized for
+            playback at a later point in time
+
+          Inputs:
+            startEnd: bool that starts recording motion if True and and stops recording if False
+        """
+        self.extendedCommand('SetZoneStart' if startEnd else 'SetZoneEnd', arg2=num)
+
+    def runPattern(self):
+        """Run the currently defined motion pattern
+        """
+        self.extendedCommand('RunPattern')
+
+    def setZoomSpeed(self, speed):
+        """Set zoom speed to given value (between 0 and 3)
+
+          Inputs:
+            speed: int between 0 and 3 indicating increasing speed
+        """
+        assert speed >= 0 and speed <= 3, f"Invalid zoom speed: {speed}"
+        self.extendedCommand('ZoomSpeed', arg2=speed)
+
+    def setFocusSpeed(self, speed):
+        """Set focus speed to given value (between 0 and 3)
+
+          Inputs:
+            speed: int between 0 and 3 indicating increasing speed
+        """
+        assert speed >= 0 and speed <= 3, f"Invalid focus speed: {speed}"
+        self.extendedCommand('FocusSpeed', arg2=speed)
+
+    def resetCameraDefaults(self):
+        """Reset the camera to its default values
+        """
+        self.extendedCommand('ResetCamera')
+
+    def autoFocus(self, mode):
+        """Turn auto-focus function on or off, or set to automatic mode
+
+          Inputs:
+            mode: bool that turns auto-focus on if True, off if False, and
+              sets it to auto-focus if None
+        """
+        self.extendedCommand('AutoFocus', arg2=0 if mode is None else 1 if mode else 2)
+
+    def autoIris(self, mode):
+        """Turn auto-iris function on or off, or set to automatic mode
+
+          Inputs:
+            mode: bool that turns auto-iris on if True, off if False, and
+              sets it to auto-iris if None
+        """
+        self.extendedCommand('AutoIris', arg2=0 if mode is None else 1 if mode else 2)
+
+    def AGC(self, mode):
+        """Turn AGC function on or off, or set to automatic mode
+
+          Inputs:
+            mode: bool that turns AGC on if True, off if False, and
+              sets it to AGC if None
+        """
+        self.extendedCommand('AGC', arg2=0 if mode is None else 1 if mode else 2)
+
+    def backlightComp(self, mode):
+        """Turn backlight compensation function on or off
+
+          Inputs:
+            mode: bool that turns backlight compensation on if True and off if False
+        """
+        self.extendedCommand('AGC', arg2=1 if mode else 0)
+
+    def AWB(self, mode):
+        """Turn auto white balance function on or off
+
+          Inputs:
+            mode: bool that turns auto white balance on if True and off if False
+        """
+        self.extendedCommand('AWB', arg2=1 if mode else 0)
+
+    def query(self):
+        """Issue Query command and return results
+
+          Returns: device address and part number
+        """
+        self.serial.reset_input_buffer()
+        cksm = (self.address + 0x00 + 0x45) % 256
+        cmd = struct.pack("BBBBBBB", 0xFF, self.address, 0x00, 0x45, 0x00, 0x00, cksm)
+        self.serial.write(cmd)
+
+        vals = self.serial.read(5)
+        logging.debug(f"Query Response: {[hex(x) for x in vals]}")
+        sync, address, partNumber, checksum = struct.unpack("BBHB", vals)
+        assert (sync == 0xFF) and (checksum == (sum(vals[1:4]) % 256)), f"Invalid packet: {[hex(x) for x in vals]}"
+        return address, partNumber
+
 
 #
 # TEST
 #
 if __name__ == '__main__':
+    import sys
     import time
 
     logging.basicConfig(level="DEBUG",
@@ -375,46 +461,65 @@ if __name__ == '__main__':
     cam = Pelco()
 
     # Extended Command with no args
+    print("GotoZeroPan")
     cam.extendedCommand('GotoZeroPan')
 
-    # Extended Command with one arg
-    cam.extendedCommand('ZoomSpeed', arg2=2)
-    time.sleep(3)
-    cam.extendedCommand('ResetCamera')  # go back to default setting
+    if False:
+        # Extended Command with one arg
+        print("setZoomSpeed")
+        cam.extendedCommand('ZoomSpeed', arg2=2)
+        time.sleep(3)
+        cam.extendedCommand('ResetCamera')  # go back to default setting
 
-    # Extended Command with two args
-    xPos = 14
-    char = ord('A')
-    cam.extendedCommand('WriteChar', xPos, char)
-    time.sleep(3)
-    cam.extendedCommand('ClearScreen')
+        # Extended Command with two args
+        xPos = 14
+        char = ord('A')
+        print(f"Put {char} character at xPos={xPos}")
+        cam.extendedCommand('WriteChar', xPos, char)
+        time.sleep(3)
+        print("Clear Screen")
+        cam.extendedCommand('ClearScreen')
 
-    # motion at three speeds
-    print("pan and tilt: LOW")
-    cam.motion(True, True, Speed.LOW, Speed.LOW)
-    time.sleep(3)
-    cam.motion(True, True, Speed.STOP, Speed.STOP)
+    if False:
+        # two axis motion at three speeds
+        print("pan right and tilt up: SLOW")
+        cam.motion(True, True, Speed.SLOW, Speed.SLOW)
+        time.sleep(3)
 
-    print("pan and tilt: NORMAL")
-    cam.motion(False, False, Speed.NORMAL, Speed.NORMAL)
-    time.sleep(2)
-    cam.motion(False, False, Speed.STOP, Speed.STOP)
+        print("pan left and tilt down: NORMAL")
+        cam.motion(False, False, Speed.NORMAL, Speed.NORMAL)
+        time.sleep(2)
 
-    print("pan and tilt: TURBO")
-    cam.motion(True, True, Speed.TURBO, Speed.TURBO)
-    time.sleep(1)
-    cam.motion(True, True, Speed.STOP, Speed.STOP)
+        print("pan right and tilt up: TURBO")
+        cam.motion(True, True, Speed.TURBO, Speed.TURBO)
+        time.sleep(0.5)
+
+        print("Stop all motion")
+        cam.stop()
+
+    if False:
+        # query the camera
+        addr, partNum = cam.query()
+        print(f"Camera Query: address={addr}, partNumber={partNum}")
 
     # zoom at three speeds
     #### TODO
 
-    # preset 62: Call to turn on and Save to turn off the IR light
-    #### TODO
+    '''
+    if True:
+        # preset 62: Call to turn on and Save to turn off the IR light
+        cam.irMode(True)
+        time.sleep(3)
+        cam.irMode(False)
 
-    # preset 63: wiper on/off
-    #### TODO
+    if True:
+        # preset 63: wiper on/off
+        cam.wiper(True)
 
     # preset 95: enter main OSD menu (or 9 twice within three secs)
     #### TODO
+    '''
 
-    cam.motion(True, True, Speed.STOP, Speed.STOP)
+    time.sleep(3)
+    print("GotoZeroPan")
+    cam.extendedCommand('GotoZeroPan')
