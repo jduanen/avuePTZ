@@ -132,10 +132,10 @@ Application for controlling and viewing video from AVUE G50IR-WB36N PZT camera
       - Checksum 0x??
 
 ## Video
-  * Local viewing with mplayer:
-    - mplayer tv:// -tv device=/dev/video4:input=0:norm=NTSC -vo x11
-  * Remote serving with ffmpeg:
-    - ????
+* Local viewing with mplayer:
+  - mplayer tv:// -tv device=/dev/video4:input=0:norm=NTSC -vo x11
+* Remote serving with ffmpeg:
+  - ????
 
 ===================================================================================
 
@@ -190,3 +190,12 @@ Application for controlling and viewing video from AVUE G50IR-WB36N PZT camera
   - wide-dynamic range (WDR) option, backlight compensation, Electronic Image Stabilization (EIS)
 * possible to link IR LEDs with AUX1
 * save current AzEl position in a preset number, call that number to return to that position
+
+===================================================================================
+
+## TODO
+* measure calibration values for pan/tilt in degrees/sec and fixed offset times
+* make a tool to set the camera's baudrate
+* make a tool that allows CLI-based control of the camera
+* create separate tool to stream the camera's video
+* create a (flask-based) web server that provides the camera's control functions
