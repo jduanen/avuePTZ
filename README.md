@@ -1,5 +1,5 @@
 # avuePZT
-Application for controlling and viewing video from AVUE PZT camera
+Application for controlling and viewing video from AVUE G50IR-WB36N PZT camera
 
 ## Connectors
   - Power
@@ -130,6 +130,14 @@ Application for controlling and viewing video from AVUE PZT camera
       - Address: 0x??
       - Part Number (15 bytes)
       - Checksum 0x??
+
+## Video
+  * Local viewing with mplayer:
+    - mplayer tv:// -tv device=/dev/video4:input=0:norm=NTSC -vo x11
+  * Remote serving with ffmpeg:
+    - ????
+
+===================================================================================
 
 ## Notes
 * 01-80 Preset: auto-tour, each with 24 presets
