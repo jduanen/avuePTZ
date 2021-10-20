@@ -132,10 +132,13 @@ Application for controlling and viewing video from AVUE G50IR-WB36N PZT camera
       - Checksum 0x??
 
 ## Video
+* Video capture device: Fushicai USBTV007 Video Grabber [EasyCAP]
+  - ID 1b71:3002
 * Local viewing with mplayer:
   - mplayer tv:// -tv device=/dev/video4:input=0:norm=NTSC -vo x11
 * Remote serving with ffmpeg:
   - ????
+
 
 ===================================================================================
 
