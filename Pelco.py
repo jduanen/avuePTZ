@@ -520,6 +520,17 @@ if __name__ == '__main__':
     #### TODO
     '''
 
+    if True:
+        # calibrate pan
+        for i in range(1, 20):
+            cam.extendedCommand('GotoZeroPan')
+            time.sleep(1)
+            cam.motion(False, None, Speed.NORMAL, None)
+            time.sleep(i)
+            cam.stop()
+            print("#", i)
+            time.sleep(1)
+
     time.sleep(3)
     print("GotoZeroPan")
     cam.extendedCommand('GotoZeroPan')
