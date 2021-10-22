@@ -4,6 +4,7 @@ Application for controlling and viewing video from AVUE G50IR-WB36N PZT camera
 """
 
 import argparse
+import functools
 import itertools
 import json
 import logging
@@ -15,13 +16,19 @@ import time
 import yaml
 from yaml import Loader
 
+from flask import Flask
+
+from flask import (Flask, Blueprint, flash, g, redirect, render_template,
+                   request, session, url_for)
+from werkzeug.security import check_password_hash, generate_password_hash
+
 from Pelco import *
 
 
 DEFAULTS = {
     'logLevel': "INFO",  #"DEBUG"  #"WARNING"
     'address': 1,
-    'port': "/dev/ttyUSB0",
+    'port': "/dev/ttyAMA0",  ##"/dev/ttyUSB0",
     'baudrate': 4800
 }
 
@@ -44,32 +51,53 @@ class AVUE(Pelco):
 
         MOVE_DURATION = 0.0
         INCR_SPEEDS = (Speed.SLOW, Speed.NORMAL, Speed.HIGH)
-        MOVE_METHOD_NAMES = ('nop', 'up', 'down', 'right', 'rightUp', 'rightDown', 'left', 'leftUp', 'rightDown')
+        MOVE_METHOD_NAMES = ('nop', 'up', 'down', 'right', 'rightUp', 'rightDown', 'left', 'leftUp', 'leftDown')
         MOVE_METHOD_SPECS = zip(MOVE_METHOD_NAMES, itertools.product([None, True, False], repeat=2))
+
         def moveMethodClosure(pan, tilt):
-            """Closure for generating camera movement methods
+            """Closure for generating continuous camera movement methods
               Inputs:
-                methodName: str name of movement method
                 pan: bool that pans CW if True, CCW if False, and does not pan if None
                 tilt: bool that tilts up if True, down if False, and does not tilt if None
             """
-            def move(self, incr=0):
-                """Raise the position of the camera by a given increment
+            def move(speed=Speed.NORMAL):
+                """Move the camera in the given direction(s) at the given speed
 
-                  This moves for an amount of time given by 'incr' but moves at slow,
-                   normal, or fast speed depending on the value of 'incr'.
+                  N.B.  This starts the camera in motion and it must be stopped at some point
 
                   Inputs:
+                    speed: Speeed value indicating the movement speed in each of the selected directions
+                """
+                self.motion(pan, tilt, speed, speed)
+            return move
+
+        def moveIncrMethodClosure(pan, tilt):
+            """Closure for generating incremental camera movement methods
+              Inputs:
+                self: ?
+                pan: bool that pans CW if True, CCW if False, and does not pan if None
+                tilt: bool that tilts up if True, down if False, and does not tilt if None
+            """
+            def moveIncr(duration=MOVE_DURATION, incr=0):
+                """Move the camera in the selected direction(s) by a given increment
+
+                  This moves for a fixed amount of time given at a speed given by the
+                   value of 'incr'
+
+                  Inputs:
+                    duration: a float indicating the number of msecs to move in each axis
                     incr: an int indicating the move increment -- 0=small, 1=medium, 2=large
                 """
+                assert duration >= 0.0, f"Invalid duration: {duration}"
                 assert incr in (0, 1, 2), f"Invalid increment '{incr}', must be in (0, 1, 2)"
                 self.motion(pan, tilt, INCR_SPEEDS[incr], INCR_SPEEDS[incr])
-                time.sleep(MOVE_DURATION)
+                time.sleep(duration)
                 self.stop()
-            return move
+            return moveIncr
 
         for methodName, (pan, tilt) in MOVE_METHOD_SPECS:
             setattr(self, methodName, moveMethodClosure(pan, tilt))
+            setattr(self, f"{methodName}Incr", moveIncrMethodClosure(pan, tilt))
 
     def query(self):
         """Override of a Pelco method that doesn't work with this camera
@@ -170,9 +198,52 @@ def run(options):
         sig = getattr(signal, 'SIG'+s)
         signal.signal(sig, shutdownHandler)
     '''
+    app = Flask(__name__) ## , instance_relative_config=True)
     cam = AVUE(options.address, options.port, options.baudrate)
 
-    sys.exit(0)
+    MOVE_FUNCS = {
+        'Up': cam.up,
+        'Down': cam.down,
+        'Left': cam.left,
+        'LeftUp': cam.leftUp,
+        'LeftDown': cam.leftDown,
+        'Right': cam.right,
+        'RightUp': cam.rightUp,
+        'RightDown': cam.rightDown
+     }
+
+    @app.route('/hello/<name>')
+    def hello(name):
+        return f"Hello, World: {name}"
+
+    @app.route('/')
+    def index():
+        return render_template('./index.html')
+
+    @app.route('/motion')
+    def motion():
+        return render_template('./motion.html')
+
+    @app.route('/move')
+    def move():
+        direction = request.args.get('direction')
+        s = request.args.get('speed')
+        speed = int(s) if s else 0
+        logging.debug(f"MOVE: {direction} @ {speed}")
+        if direction == 'Stop':
+            cam.stop()
+        else:
+            if direction:
+                MOVE_FUNCS[direction](speed)
+        return("nothing")
+        '''
+        j = {'foo': 1}
+        return(j)
+        '''
+
+    app.run()
+    logging.debug("Exiting")
+    return(0)
 
 def getOpts():
     usage = f"Usage: {sys.argv[0]} [-v] [-L <logLevel>] [-l <logFile>] " + \
@@ -230,4 +301,3 @@ if __name__ == '__main__':
     opts = getOpts()
     r = run(opts)
     sys.exit(r)
-
