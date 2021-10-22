@@ -136,8 +136,31 @@ Application for controlling and viewing video from AVUE G50IR-WB36N PZT camera
   - ID 1b71:3002
 * Local viewing with mplayer:
   - mplayer tv:// -tv device=/dev/video4:input=0:norm=NTSC -vo x11
-* Remote serving with ffmpeg:
-  - ????
+* Remote serving with vlc:
+  - source device: v4l2:///dev/video0
+  - 
+
+sudo apt install x264
+cvlc -vvv v4l2:///dev/video0 --sout '#transcode{vcodec=h264,vb=800,acodec=none}:rtp{sdp=rtsp://:8554/}'
+
+cvlc -vvv v4l2:///dev/video0 --sout '#transcode{vcodec=mp2v,vb=800,acodec=none}:rtp{sdp=rtsp://:8554/}'
+
+cvlc -vvv v4l2:///dev/video0:chroma=mp2v --v4l2-width 1280 --v4l2-height 720 --sout '#transcode{vcodec=mp2v,acodec=mpga,fps=30}:rtp{mux=ts,sdp=rtsp://:8888/live.sdp}'
+
+* using HW encode:
+  - ffmpeg -i /dev/video0 -c:v h264_v4l2m2m -b:v 8M -f mpegts udp://192.168.166.216:8999
+
+
+
+* client side:
+  - vlc -vvv --network-caching 200 rtsp://192.168.166.216:8554/
+  - vlc -vvv udp://192.168.166.216:8999
+
+* enable port 5000 on gpuServer1
+  - sudo iptables -A INPUT -p tcp --dport 5000 -j ACCEPT
+  - sudo apt-get install iptables-persistent
+
+  - sudo ufw allow 5000/tcp
 
 
 ===================================================================================
