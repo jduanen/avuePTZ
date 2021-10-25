@@ -155,7 +155,7 @@ class AVUE(Pelco):
           Inputs:
             degrees: int indicating degrees of azimuth (from 0 to 360)
         """
-        assert degrees >= 0 and degrees <= 360, f"Invalid azimuth degrees: {degrees}"
+        assert 0 <= degrees <= 360, f"Invalid azimuth degrees: {degrees}"
         self.extendedCommand('GotoZeroPan')
         time.sleep(1)
         d = degrees if degrees < 180 else degrees - 180
@@ -171,7 +171,7 @@ class AVUE(Pelco):
           Inputs:
             degrees: int indicating degrees of elevation (from 0 to 180)
         """
-        assert degrees >= 0 and degrees <= 180, f"Invalid elevation degrees: {degrees}"
+        assert 0 <= degrees <= 180, f"Invalid elevation degrees: {degrees}"
         #### FIXME figure out a way to home the elevation
         raise NotImplementedError("TBD")
 
@@ -241,7 +241,24 @@ def run(options):
         return(j)
         '''
 
-    app.run()
+    @app.route('/wiper')
+    def wiper():
+        cam.wiper()
+        return("nothing")
+
+    @app.route('/zoom')
+    def zoom():
+        direction = requests.args.get('direction') == 'In'
+        speed = 2  #### FIXME
+        cam.zoom(direction, speed)
+
+    @app.route('/focus')
+    def focus():
+        direction = requests.args.get('direction') == 'Near'
+        speed = 2  #### FIXME
+        cam.focus(direction, speed)
+
+    app.run(host='0.0.0.0', port=8000)
     logging.debug("Exiting")
     return(0)
 
