@@ -28,7 +28,7 @@ from Pelco import *
 DEFAULTS = {
     'logLevel': "INFO",  #"DEBUG"  #"WARNING"
     'address': 1,
-    'port': "/dev/ttyAMA0",  ##"/dev/ttyUSB0",
+    'port': "/dev/ttyUSB0",  ##"/dev/ttyAMA0",
     'baudrate': 4800
 }
 
