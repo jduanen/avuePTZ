@@ -149,7 +149,9 @@ cvlc -vvv v4l2:///dev/video0:chroma=mp2v --v4l2-width 1280 --v4l2-height 720 --s
 
 * using HW encode:
   - ffmpeg -i /dev/video0 -c:v h264_v4l2m2m -b:v 8M -f mpegts udp://192.168.166.216:8999
-
+  - options
+    * -framerate 25 -fflags +genpts -re
+    * -vcodec libx264 -preset veryfast -pix_fmt yuv420p -strict -2 -y -f mpegts -r 25 udp://239.0.0.1:1234?pkt_size=1316
 
 
 * client side:
@@ -161,6 +163,32 @@ cvlc -vvv v4l2:///dev/video0:chroma=mp2v --v4l2-width 1280 --v4l2-height 720 --s
   - sudo apt-get install iptables-persistent
 
   - sudo ufw allow 5000/tcp
+
+* test port access
+  - python3 -m http.server 8000
+
+------------------------------------------------------------------
+* OpenMAX and MMAL are the only platform APIs available on Raspi
+* Video format of capture device
+  - 720x480, yuyv422, interlaced
+  - packet size: 691,200, stride: 1440
+* ffmpeg
+  - yuv420p, bicubic, auto-scaler_0
+
+
+* server
+  - ffmpeg -fflags +genpts+igndts -pix_fmt yuv420p -i /dev/video0 -c:v h264_v4l2m2m -b:v 8M -f mpegts - | cvlc -I dummy - --sout='#std{access=http,mux=ts,dst=:8554}'
+  - ffmpeg -i /dev/video0 -c:v h264_v4l2m2m -b:v 8M -f mpegts - | cvlc -I dummy - --sout='#std{access=http,mux=ts,dst=:8554}'
+  - ffmpeg -i /dev/video0 -c:v h264_omx -b:v 8M -f mpegts - | cvlc -I dummy - --sout='#std{access=http,mux=ts,dst=:8554}'
+  - ffmpeg -fflags +genpts+igndts -i /dev/video0 -c:v h264_omx -an -b:v 10M -progress pipe:2 -f mpegts - | cvlc -I dummy - --sout='#std{access=http,mux=ts,dst=:8554,acodec=none}'
+
+  - ffmpeg -fflags +genpts+igndts -i /dev/video0 -c:v h264_omx -an -b:v 12M -f mpegts - | cvlc -I dummy - --sout='#std{access=http,mux=ts,dst=:8554}'
+
+
+* client
+  - vlc http://avue:8554
+
+
 
 
 ===================================================================================
