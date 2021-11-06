@@ -258,7 +258,7 @@ def run(options):
         speed = 2  #### FIXME
         cam.focus(direction, speed)
 
-    app.run(host='0.0.0.0', port=8000)
+    app.run(host="0.0.0.0", port="8080")
     logging.debug("Exiting")
     return(0)
 
