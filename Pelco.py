@@ -168,11 +168,11 @@ class Pelco():
         self.serial.reset_input_buffer()
         if panSpeed == None:
             panSpeed = self.panSpeed
-        assert panSpeed == Speed.TURBO or (panSpeed >= Speed.SLOW and panSpeed <= Speed.HIGH), f"Invalid Pan Speed: {panSpeed}"
+        assert panSpeed == Speed.TURBO or (Speed.SLOW <= panSpeed <= Speed.HIGH), f"Invalid Pan Speed: {panSpeed}"
         self.panSpeed = panSpeed
         if tiltSpeed == None:
             tiltSpeed = self.tiltSpeed
-        assert tiltSpeed == Speed.TURBO or (tiltSpeed >= Speed.SLOW and tiltSpeed <= Speed.HIGH), f"Invalid Tilt Speed: {tiltSpeed}"
+        assert tiltSpeed == Speed.TURBO or (Speed.SLOW <= tiltSpeed <= Speed.HIGH), f"Invalid Tilt Speed: {tiltSpeed}"
         self.tiltSpeed = tiltSpeed
         cksm = (self.address + cmds1_2[0] + cmds1_2[1] + panSpeed + tiltSpeed) % 256
         cmd = struct.pack("BBBBBBB", 0xFF, self.address, *cmds1_2, panSpeed, tiltSpeed, cksm)
@@ -310,7 +310,7 @@ class Pelco():
             presetID: 8b int identifying a preset
         """
         assert presetCmd in PRESET_COMMANDS, f"Invalid Present Command type: {presetCmd} not in {list(PRESET_COMMANDS.keys())}"
-        assert presetID >= 0 and presetID <= 0xFF, f"Invalid Preset ID: {presetID}"
+        assert 0 <= presetID <= 0xFF, f"Invalid Preset ID: {presetID}"
         self.extendedCommand(PRESET_COMMANDS[presetCmd], arg2=presetID)
 
     def auxiliary(self, set, num):
@@ -320,7 +320,7 @@ class Pelco():
             set: bool that sets the given aux function if True and clears it if False
             num: int that indicates which of the eight (1-8) aux functions to set/clear
         """
-        assert num > 0 and num <= 8, f"Invalid aux number '{num}', must be between 1-8, inclusive"
+        assert 0 < num <= 8, f"Invalid aux number '{num}', must be between 1-8, inclusive"
         self.extendedCommand('SetAux' if set else 'ClearAux', arg2=num)
 
     def setZone(self, startEnd, num):
@@ -330,7 +330,7 @@ class Pelco():
             startEnd: bool that sets the start of the given zone if True and the end if False
             num: int that indicates which of the eight (1-8) zones to set
         """
-        assert num > 0 and num <= 8, f"Invalid zone number '{num}', must be between 1-8, inclusive"
+        assert 0 < num <= 8, f"Invalid zone number '{num}', must be between 1-8, inclusive"
         self.extendedCommand('SetZoneStart' if startEnd else 'SetZoneEnd', arg2=num)
 
     def alarmAck(self, num):
@@ -339,7 +339,7 @@ class Pelco():
           Inputs:
             num: int that indicates which of the eight (1-8) alarms to ack
         """
-        assert num > 0 and num <= 8, f"Invalid alarm number '{num}', must be between 1-8, inclusive"
+        assert 0 < num <= 8, f"Invalid alarm number '{num}', must be between 1-8, inclusive"
         self.extendedCommand('AlarmACK', arg2=num)
 
     def zoneScan(self, onOff):
@@ -370,7 +370,7 @@ class Pelco():
           Inputs:
             speed: int between 0 and 3 indicating increasing speed
         """
-        assert speed >= 0 and speed <= 3, f"Invalid zoom speed: {speed}"
+        assert 0 <= speed <= 3, f"Invalid zoom speed: {speed}"
         self.extendedCommand('ZoomSpeed', arg2=speed)
 
     def setFocusSpeed(self, speed):
@@ -379,7 +379,7 @@ class Pelco():
           Inputs:
             speed: int between 0 and 3 indicating increasing speed
         """
-        assert speed >= 0 and speed <= 3, f"Invalid focus speed: {speed}"
+        assert 0 <= speed <= 3, f"Invalid focus speed: {speed}"
         self.extendedCommand('FocusSpeed', arg2=speed)
 
     def resetCameraDefaults(self):
