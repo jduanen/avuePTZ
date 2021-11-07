@@ -16,14 +16,14 @@ import time
 import yaml
 from yaml import Loader
 
-from flask import Flask
-
 from flask import (Flask, Blueprint, flash, g, redirect, render_template,
                    request, session, url_for)
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from Pelco import *
 
+
+#### FIXME add web server port to defaults
 
 DEFAULTS = {
     'logLevel': "INFO",  #"DEBUG"  #"WARNING"
@@ -248,15 +248,29 @@ def run(options):
 
     @app.route('/zoom')
     def zoom():
-        direction = requests.args.get('direction') == 'In'
+        d = request.args.get('direction')
         speed = 2  #### FIXME
-        cam.zoom(direction, speed)
+        if d == 'Stop':
+            logging.debug("ZOOM: Stop")
+            cam.stop()
+        else:
+            direction = d == "In"
+            logging.debug(f"ZOOM: {direction} @ {speed}")
+            cam.zoom(direction, speed)
+        return("nothing")
 
     @app.route('/focus')
     def focus():
-        direction = requests.args.get('direction') == 'Near'
+        d = request.args.get('direction')
         speed = 2  #### FIXME
-        cam.focus(direction, speed)
+        if d == 'Stop':
+            logging.debug("FOCUS: Stop")
+            cam.stop()
+        else:
+            direction = d == "Near"
+            logging.debug(f"FOCUS: {direction} @ {speed}")
+            cam.focus(direction, speed)
+        return("nothing")
 
     app.run(host="0.0.0.0", port="8080")
     logging.debug("Exiting")
