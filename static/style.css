@@ -159,17 +159,13 @@ input[type=submit] {
 }
 
 .momentaryBtn {
-  height:  fit-content;
-  width:  fit-content;
-  background-color: #fff;
+  height:  24px;
+  width:  50px;
   border-radius: 12px;
   border:  3px solid #c4c4c4;
-  background-color: transparent;
+  background-color: aliceblue;
   font-size:  1rem;
   color:  #333;
-  background-image: linear-gradient(to bottom,transparent,transparent 50%,rgba(0,0,0,.04));
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,.05), inset 0 1px 0 0 rgba(255,255,255,.45), inset 0 -1px 0 0 rgba(255,255,255,.15), 0 1px 0 0 rgba(255,255,255,.15);
-  text-shadow: 0 1px rgba(255,255,255,.4);
 }
 
 .momentaryBtn:hover {
@@ -201,9 +197,10 @@ input[type=submit] {
 
 .switch {
   position: relative;
+  top:  14px;
   display: inline-block;
-  width: 90px;
-  height: 34px;
+  width: 68px;
+  height: 23px;
 }
 
 .switch input {display:none;}
@@ -224,10 +221,10 @@ input[type=submit] {
 .slider:before {
   position: absolute;
   content: "";
-  height: 26px;
-  width: 26px;
-  left: 4px;
-  bottom: 4px;
+  height: 19px;
+  width: 19px;
+  left: 2px;
+  bottom: 2px;
   background-color: white;
   -webkit-transition: .4s;
   transition: .4s;
@@ -243,9 +240,9 @@ input:focus + .slider {
 }
 
 input:checked + .slider:before {
-  -webkit-transform: translateX(26px);
-  -ms-transform: translateX(26px);
-  transform: translateX(55px);
+  -webkit-transform: translateX(15px);
+  -ms-transform: translateX(15px);
+  transform: translateX(44px);
 }
 
 .slider:after
