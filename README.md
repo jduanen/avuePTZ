@@ -1,6 +1,8 @@
 # avuePZT
 Application for controlling and viewing video from AVUE G50IR-WB36N PZT camera
 
+![AVUE PZT Camera](AVUE_G50IR-WB36N.jpg)
+
 ## Connectors
   - Power
     * Red:    24VAC
