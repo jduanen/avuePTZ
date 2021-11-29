@@ -7,7 +7,12 @@ User=pi
 WorkingDirectory=/home/pi/Code/avuePZT
 ExecStart=/bin/bash -c 'cd /home/jdn/Code/avuePZT && python3 ./avuePZT.py'
 StandardOutput=syslog
-Restart=always
+Restart=on-failure
+WatchdogSec=30s
+StartLimitInterval=5min
+StartLimitBurst=4
+StartLimitAction=reboot-force
+NotifyAccess=all
 
 [Install]
 WantedBy=multi-user.target
