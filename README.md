@@ -249,6 +249,26 @@ cvlc -vvv v4l2:///dev/video0:chroma=mp2v --v4l2-width 1280 --v4l2-height 720 --s
 
 ===================================================================================
 
+* Temperature
+  - vcgencmd measure_temp
+  - alias temp='/opt/vc/bin/vcgencmd measure_temp'
+
+* RSSI
+  - iwlist wlan0 scan | egrep dBm
+
+* monitor temp and RSSI
+  - while true; do vcgencmd measure_temp; sleep 30; iwlist wlan0 scan | egrep dBm; done
+
+* setup avue service
+  - sudo cp avue.service /lib/systemd/system/avue.service
+  - sudo systemctl daemon-reload
+  - sudo systemctl enable avue
+  - sudo systemctl start avue
+  - sudo systemctl status avue
+
+
+===================================================================================
+
 ## TODO
 * measure calibration values for pan/tilt in degrees/sec and fixed offset times
 * make a tool to set the camera's baudrate
@@ -256,4 +276,8 @@ cvlc -vvv v4l2:///dev/video0:chroma=mp2v --v4l2-width 1280 --v4l2-height 720 --s
 * create separate tool to stream the camera's video
 * create a (flask-based) web server that provides the camera's control functions
 * add methods for OSD menu controls to the AVUE object
+* create tool to publish MQTT topics to SensorNet server
+  - temperature (using vcgen python package)
+  - RSSI (using ???? python package)
+* create nanny to ensure applications are all running
 
