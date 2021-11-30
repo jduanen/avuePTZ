@@ -18,6 +18,7 @@ from yaml import Loader
 
 from flask import (Flask, Blueprint, flash, g, redirect, render_template,
                    request, session, url_for)
+from systemd.daemon import notify, Notification
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from Pelco import *
@@ -29,7 +30,8 @@ DEFAULTS = {
     'logLevel': "INFO",  #"DEBUG"  #"WARNING"
     'address': 1,
     'port': "/dev/ttyUSB0",  ##"/dev/ttyAMA0",
-    'baudrate': 4800
+    'baudrate': 4800,
+    'watchdog': 15  # watchdog interval in usecs (15 secs)
 }
 
 BAUD_RATES = (4800, 9600)
@@ -37,6 +39,46 @@ BAUD_RATES = (4800, 9600)
 #### TODO improve these values
 PAN_DEGREES_PER_SEC = 18.4  # N.B. measured for NORMAL Speed movement
 TILT_DEGREES_PER_SEC = 18.4  #### FIXME
+
+
+#### TODO put this in a common file
+class Watchdog():
+    @staticmethod
+    def notification(typ):
+        try:
+            notify(typ)
+        except Exception as ex:
+            logging.warning(f"Systemd notification ({typ}) failed: {ex}")
+
+    def __init__(self, timeout):
+        self.timeout = timeout
+        self.timer = None
+        if timeout:
+            self.timer = Timer(self.timeout, self.handler)
+            self.timer.start()
+            Watchdog.notification(Notification.READY)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.stop()
+        Watchdog.notification(Notification.STOPPING)
+
+    def stop(self):
+        if self.timer:
+            self.timer.cancel()
+        self.timer = None
+
+    def reset(self):
+        self.stop()
+        self.timer = Timer(self.timeout, self.handler)
+        self.timer.start()
+
+    def handler(self):
+        Watchdog.notification(Notification.WATCHDOG)
+        if self.timer:
+            self.reset()
 
 
 class AVUE(Pelco):
@@ -201,6 +243,8 @@ def run(options):
     app = Flask(__name__) ## , instance_relative_config=True)
     cam = AVUE(options.address, options.port, options.baudrate)
 
+    notify(Notification.READY)
+
     MOVE_FUNCS = {
         'Up': cam.up,
         'Down': cam.down,
@@ -278,7 +322,7 @@ def run(options):
 
 def getOpts():
     usage = f"Usage: {sys.argv[0]} [-v] [-L <logLevel>] [-l <logFile>] " + \
-      "[-a <address>] [-b <baudrate>] [-p <port>]"
+      "[-a <address>] [-b <baudrate>] [-p <port>] [-w <watchdog>]"
     ap = argparse.ArgumentParser()
     ap.add_argument(
         "-L", "--logLevel", action="store", type=str,
@@ -301,6 +345,9 @@ def getOpts():
     ap.add_argument(
         "-v", "--verbose", action="count", default=0,
         help="Enable printing of debug info")
+    ap.add_argument(
+        "-w", "--watchdog", action="store", type=int, default=DEFAULTS['watchdog'],
+        help="secs between watchdog notifications to systemd (0 means no watchdog)")
     opts = ap.parse_args()
 
     if opts.logFile:
@@ -321,14 +368,21 @@ def getOpts():
         logging.error(f"Invalid baud rate '{opts.baudrate}': must be be in {list(BAUD_RATES)}")
         sys.exit(1)
 
+    opts.watchdog = 0 if opts.watchdog < 1 else opts.watchdog
+
     if opts.verbose:
         print(f"    Camera Address:  {opts.address}")
         print(f"    RS-485 Port:     {opts.port}")
         print(f"    RS-485 Baudrate: {opts.baudrate}")
+        if opts.watchdog:
+            print(f"    Watchdog Interval:  {opts.watchdog} secs")
+        else:
+            print("    Watchdog not enabled")
     return opts
 
 
 if __name__ == '__main__':
     opts = getOpts()
-    r = run(opts)
+    with Watchdog(opts.watchdog) as dog:
+        r = run(opts)
     sys.exit(r)
