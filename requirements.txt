@@ -3,3 +3,5 @@ functools
 parse
 pyserial
 pyyaml
+rssi
+systemd
