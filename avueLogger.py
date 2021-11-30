@@ -23,14 +23,13 @@ DEFAULTS = {
 }
 
 
+#### TODO put this in a common file
 class Watchdog():
     @staticmethod
     def notification(typ):
-        if True:
-            print(f"N: {typ}")
-            return
+        print(typ)
         try:
-            notify(Notification.STOPPING)
+            notify(typ)
         except Exception as ex:
             logging.warning(f"Systemd notification ({typ}) failed: {ex}")
 
@@ -43,11 +42,9 @@ class Watchdog():
             Watchdog.notification(Notification.READY)
 
     def __enter__(self):
-        print("ENTER")
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
-        print("EXIT")
         self.stop()
         Watchdog.notification(Notification.STOPPING)
 
@@ -62,7 +59,6 @@ class Watchdog():
         self.timer.start()
 
     def handler(self):
-        print("WD")
         Watchdog.notification(Notification.WATCHDOG)
         if self.timer:
             self.reset()
@@ -74,9 +70,8 @@ def run(options):
         sig = getattr(signal, 'SIG'+s)
         signal.signal(sig, shutdownHandler)
     '''
-    with Watchdog(options.watchdog) as dog:
-        #### TODO put work here
-        pass
+    #### TODO put work here
+    time.sleep(10)
     logging.info("Exiting")
     return(0)
 
@@ -123,5 +118,6 @@ def getOpts():
 
 if __name__ == '__main__':
     opts = getOpts()
-    r = run(opts)
+    with Watchdog(opts.watchdog) as dog:
+        r = run(opts)
     sys.exit(r)
