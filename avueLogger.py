@@ -153,12 +153,12 @@ def run(options):
         signal.signal(sig, shutdownHandler)
 
     intfName, macAddr = macAddress(options.mqttBroker)
-    TOPIC_BASE = f"{MQTT_TOPIC}/{macAddr}/cmd/"
+    TOPIC_BASE = f"{MQTT_TOPIC}/{macAddr}"
     quality, rssi = wifiQuality(intfName)
 
     logging.info("Starting")
     #### FIXME
-    print(f"{TOPIC_BASE},Startup,{DEV_TYPE},{APPL_NAME},{APPL_VERSION},temp:.1f,q:.4f,rssi:d,{rssi}")
+    print(f"{TOPIC_BASE}/cmd,Startup,{DEV_TYPE},{APPL_NAME},{APPL_VERSION},temp:.1f,q:.4f,rssi:d,{rssi}")
     while running:
         temperature = deviceTemperature()
         quality, rssi = wifiQuality(intfName)
