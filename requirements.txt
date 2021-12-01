@@ -3,5 +3,6 @@ functools
 parse
 pyserial
 pyyaml
+socket
 systemd
 vcgencmd
