@@ -175,7 +175,7 @@ def getOpts():
       "[-D] [-m <mqttHost>] [-s <sampleInterval>]"
     ap = argparse.ArgumentParser()
     ap.add_argument(
-        "-D", "--disableWatchdog", action="store_true", type=bool, default=False,
+        "-D", "--disableWatchdog", action="store_true", default=False,
         help="Disable watchdog function")
     ap.add_argument(
         "-L", "--logLevel", action="store", type=str,
