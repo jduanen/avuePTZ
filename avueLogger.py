@@ -23,8 +23,8 @@ import vcgencmd
 
 
 DEFAULTS = {
-    'logLevel': "INFO",  #"DEBUG"  #"WARNING"
-    'watchdog': 15,      # watchdog interval in usecs (15 secs),
+    'logLevel': "INFO",   #"DEBUG"  #"WARNING"
+    'sampleInterval': 15, # sample interval (15 secs)
     'mqttBroker': "gpuServer1"
 }
 
@@ -164,15 +164,19 @@ def run(options):
         quality, rssi = wifiQuality(intfName)
         #### FIXME
         print(f"{TOPIC_BASE}/data,{temperature},{quality:.4f},{rssi}")
-        time.sleep(options.watchdog)
+        #### TODO think about decoupling sampling interval and watchdog timer
+        time.sleep(options.sampleInterval)
     logging.info("Exiting")
     return(0)
 
 
 def getOpts():
     usage = f"Usage: {sys.argv[0]} [-v] [-L <logLevel>] [-l <logFile>] " + \
-      "[-m <mqttHost>] [-w <watchdog>]"
+      "[-D] [-m <mqttHost>] [-s <sampleInterval>]"
     ap = argparse.ArgumentParser()
+    ap.add_argument(
+        "-D", "--disableWatchdog", action="store_true", type=bool, default=False,
+        help="Disable watchdog function")
     ap.add_argument(
         "-L", "--logLevel", action="store", type=str,
         default=DEFAULTS['logLevel'],
@@ -186,11 +190,11 @@ def getOpts():
         default=DEFAULTS['mqttBroker'],
         help="Hostname for where the MQTT broker is running")
     ap.add_argument(
+        "-s", "--sampleInterval", action="store", type=int, default=DEFAULTS['sampleInterval'],
+        help="secs between data samples")
+    ap.add_argument(
         "-v", "--verbose", action="count", default=0,
         help="Enable printing of debug info")
-    ap.add_argument(
-        "-w", "--watchdog", action="store", type=int, default=DEFAULTS['watchdog'],
-        help="secs between watchdog notifications to systemd (0 means no watchdog)")
     opts = ap.parse_args()
 
     if opts.logFile:
@@ -203,19 +207,21 @@ def getOpts():
                             format='%(asctime)s %(levelname)-8s %(message)s',
                             datefmt='%Y-%m-%d %H:%M:%S')
 
-    opts.watchdog = 0 if opts.watchdog < 1 else opts.watchdog
+    if opts.sampleInterval <= 0:
+        logging.error(f"Invalid sample interval: '{opts.sampleInterval}' secs")
+        sys.exit(1)
 
     if opts.verbose:
-        print(f"    MQTT Broker:        {opts.mqttBroker}")
-        if opts.watchdog:
-            print(f"    Watchdog Interval:  {opts.watchdog} secs")
+        print(f"    MQTT Broker:     {opts.mqttBroker}")
+        print(f"    Sample Interval: {opts.sampleInterval} secs")
         else:
+        if opts.disableWatchdog:
             print("    Watchdog not enabled")
     return opts
 
 
 if __name__ == '__main__':
     opts = getOpts()
-    with Watchdog(opts.watchdog) as dog:
+    with Watchdog(opts.sampleInterval) as dog:
         r = run(opts)
     sys.exit(r)
