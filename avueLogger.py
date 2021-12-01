@@ -158,7 +158,7 @@ def run(options):
 
     logging.info("Starting")
     #### FIXME
-    print(f"{TOPIC_BASE}/cmd,Startup,{DEV_TYPE},{APPL_NAME},{APPL_VERSION},temp:.1f,q:.4f,rssi:d,{rssi}")
+    print(f"{TOPIC_BASE}/cmd,Startup,{DEV_TYPE},{APPL_NAME},{APPL_VERSION},temp:.1f,q:.2f,rssi:d,{rssi}")
     while running:
         temperature = deviceTemperature()
         quality, rssi = wifiQuality(intfName)
