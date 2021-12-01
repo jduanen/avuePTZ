@@ -1,6 +1,14 @@
 #!/bin/bash
 #
-# ????
+# Script that runs ffmpeg to serve the video stream and issues watchdog updates
+#
+# Setup by installing 'avueVideo.service' in /lib/systemd/sysetm and running:
+#  sudo systemctl daemon-reload
+#  sudo systemctl start avueVideo
+#  sudo systemctl status avueVideo
+#
+# To view video: 'vlc http://avue:8554'
+
 
 INTERVAL=15
 
