@@ -4,5 +4,6 @@ parse
 pyserial
 pyyaml
 socket
+subprocess
 systemd
 vcgencmd
