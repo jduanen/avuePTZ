@@ -93,6 +93,8 @@ def deviceTemperature():
 
       Returns: float value of device temperature in degrees C
     """
+    global vcgen
+
     if not vcgen:
         vcgen = vcgencmd.Vcgencmd()
     return vcgen.measure_temp()
