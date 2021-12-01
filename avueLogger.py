@@ -161,7 +161,7 @@ def run(options):
     print(f"{TOPIC_BASE},Startup,{DEV_TYPE},{APPL_NAME},{APPL_VERSION},temp:.1f,q:.4f,rssi:d,{rssi}")
     while running:
         temperature = deviceTemperature()
-        quality, rssi = wifiQuality()
+        quality, rssi = wifiQuality(intfName)
         #### FIXME
         print(f"{TOPIC_BASE}/data,{temperature},{quality:.4f},{rssi}")
         time.sleep(options.watchdog)
