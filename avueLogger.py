@@ -214,7 +214,6 @@ def getOpts():
     if opts.verbose:
         print(f"    MQTT Broker:     {opts.mqttBroker}")
         print(f"    Sample Interval: {opts.sampleInterval} secs")
-        else:
         if opts.disableWatchdog:
             print("    Watchdog not enabled")
     return opts
