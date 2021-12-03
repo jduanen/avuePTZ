@@ -51,6 +51,16 @@ SUB_TOPICS = {
 
 
 vcgen = None
+running = True
+
+
+def _shutdownHandler(signum, frame):
+    """????
+    """
+    global running
+
+    logging.debug(f"Caught signal: {signum}")
+    running = False
 
 
 #### TODO put this in a common file
@@ -158,13 +168,6 @@ class Watchdog():
 
 
 def run(options):
-    running = True
-
-    def _shutdownHandler(signum, frame):
-        logging.debug(f"Caught signal: {signum}")
-        running = False
-
-
     #### FIXME
     '''
     def _onConnect(client, userdata, flags, rc):
