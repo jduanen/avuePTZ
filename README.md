@@ -191,6 +191,25 @@ cvlc -vvv v4l2:///dev/video0:chroma=mp2v --v4l2-width 1280 --v4l2-height 720 --s
   - vlc http://avue:8554
 
 
+===================================================================================
+
+* Temperature
+  - vcgencmd measure_temp
+  - alias temp='/opt/vc/bin/vcgencmd measure_temp'
+
+* RSSI
+  - iwlist wlan0 scan | egrep dBm
+
+* monitor temp and RSSI
+  - while true; do vcgencmd measure_temp; sleep 30; iwlist wlan0 scan | egrep dBm; done
+
+* setup avue services
+  - sudo cp avue<svc>.service /lib/systemd/system/avue<svc>.service
+  - sudo systemctl daemon-reload
+  - sudo systemctl enable avue<svc>
+  - sudo systemctl start avue<svc>
+  - sudo systemctl status avue<svc>
+
 
 
 ===================================================================================
@@ -246,26 +265,6 @@ cvlc -vvv v4l2:///dev/video0:chroma=mp2v --v4l2-width 1280 --v4l2-height 720 --s
   - wide-dynamic range (WDR) option, backlight compensation, Electronic Image Stabilization (EIS)
 * possible to link IR LEDs with AUX1
 * save current AzEl position in a preset number, call that number to return to that position
-
-===================================================================================
-
-* Temperature
-  - vcgencmd measure_temp
-  - alias temp='/opt/vc/bin/vcgencmd measure_temp'
-
-* RSSI
-  - iwlist wlan0 scan | egrep dBm
-
-* monitor temp and RSSI
-  - while true; do vcgencmd measure_temp; sleep 30; iwlist wlan0 scan | egrep dBm; done
-
-* setup avue service
-  - sudo cp avue.service /lib/systemd/system/avue.service
-  - sudo systemctl daemon-reload
-  - sudo systemctl enable avue
-  - sudo systemctl start avue
-  - sudo systemctl status avue
-
 
 ===================================================================================
 
