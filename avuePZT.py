@@ -54,7 +54,7 @@ class Watchdog():
         self.timeout = timeout
         self.timer = None
         if timeout:
-            self.timer = Timer(self.timeout, self.handler)
+            self.timer = threading.Timer(self.timeout, self.handler)
             self.timer.start()
             Watchdog.notification(Notification.READY)
 
@@ -72,7 +72,7 @@ class Watchdog():
 
     def reset(self):
         self.stop()
-        self.timer = Timer(self.timeout, self.handler)
+        self.timer = threading.Timer(self.timeout, self.handler)
         self.timer.start()
 
     def handler(self):
