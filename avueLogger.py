@@ -130,7 +130,6 @@ def deviceTemperature():
 class Watchdog():
     @staticmethod
     def notification(typ):
-        print(typ)
         try:
             notify(typ)
         except Exception as ex:
