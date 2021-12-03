@@ -205,7 +205,7 @@ def run(options):
 
     logging.info("Starting")
     cmdTopic = f"{topicBase}/{SUB_TOPICS[SUB_TOPIC_COMMAND]}"
-    msg = f"Startup,{DEV_TYPE},{APPL_NAME},{APPL_VERSION},temp:.1f,q:.2f,rssi:d,{rssi}"
+    msg = f"Startup,{DEV_TYPE},{APPL_NAME},{APPL_VERSION},temp:.1f,q:.4f,rssi:d,{rssi}"
     logging.info(f"{cmdTopic},{msg}")
     res = client.publish(cmdTopic, payload=msg)
     if res.rc:
@@ -218,7 +218,7 @@ def run(options):
         quality, rssi = wifiQuality(intfName)
         msg = f"{temperature},{quality:.4f},{rssi}"
         logging.info(f"{dataTopic},{msg}")
-        res = client.publish(cmdTopic, payload=msg)
+        res = client.publish(dataTopic, payload=msg)
         if res.rc:
             logging.warning(f"Failed to publish sample message: {res}")
             sys.exit(1)
