@@ -24,7 +24,7 @@ import vcgencmd
 
 DEFAULTS = {
     'logLevel': "INFO",   #"DEBUG"  #"WARNING"
-    'sampleInterval': 15, # sample interval (15 secs)
+    'sampleInterval': 60, # sample interval (1 min)
     'mqttBroker': "gpuServer1"
 }
 
