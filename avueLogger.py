@@ -17,7 +17,7 @@ import time
 import yaml
 from yaml import Loader
 
-#import paho.mqtt.client as mqtt
+import paho.mqtt.client as mqtt
 from systemd.daemon import notify, Notification
 import vcgencmd
 
@@ -32,6 +32,22 @@ MQTT_TOPIC = "/sensors/avue"
 APPL_NAME = "AvuePZT"
 APPL_VERSION = "1.1.0"
 DEV_TYPE = "Rpi3"
+
+#### FIXME import this from SensorNet.py and add another dependency
+SUB_TOPIC_DATA = 0
+SUB_TOPIC_COMMAND = 1
+SUB_TOPIC_RESPONSE = 2
+SUB_TOPIC_ERROR = 3
+SUB_TOPIC_STARTUP = 4
+
+#### FIXME import this from SensorNet.py and add another dependency
+SUB_TOPICS = {
+    SUB_TOPIC_DATA: "data",
+    SUB_TOPIC_COMMAND: "cmd",
+    SUB_TOPIC_RESPONSE: "response",
+    SUB_TOPIC_ERROR: "error",
+    SUB_TOPIC_STARTUP: "startup",
+}
 
 
 vcgen = None
@@ -144,29 +160,73 @@ class Watchdog():
 def run(options):
     running = True
 
-    def shutdownHandler(signum, frame):
+    def _shutdownHandler(signum, frame):
         logging.debug(f"Caught signal: {signum}")
         running = False
 
+
+    #### FIXME
+    '''
+    def _onConnect(client, userdata, flags, rc):
+        """????
+        """
+        if rc == 0:
+            logging.info("Connected to MQTT broker")
+        else:
+            logging.error(f"Failed to connect to MQTT broker: {rc}")
+
+    def _onMessage(client, userData, message):
+        parts = message.topic.split('/')
+        if len(parts) < 5 or len(parts) > 6 or parts[1] != 'sensors' or parts[-1] not in SUB_TOPICS.values():
+            logging.warning(f"Unrecognized message: {message}")
+        topic = "/".join(parts)
+        self.msgQ.put((topic, message.payload.decode("utf-8"), message.timestamp))
+    '''
+
     for s in ('TERM', 'HUP', 'INT'):
         sig = getattr(signal, 'SIG'+s)
-        signal.signal(sig, shutdownHandler)
+        signal.signal(sig, _shutdownHandler)
+
+    client = mqtt.Client("Alien Font Display Logger")
+    client.enable_logger(logging.getLogger(__name__))
+    if client.connect(options.mqttBroker):
+        logging.error(f"Failed to connect to MQTT broker '{options.mqttBroker}'")
+        raise Exception("Failed to connect to MQTT broker")
+    #### FIXME
+    '''
+    client.on_message = _onMessage
+    client.on_connect = _onConnect
+    '''
+    client.loop_start()
 
     intfName, macAddr = macAddress(options.mqttBroker)
-    TOPIC_BASE = f"{MQTT_TOPIC}/{macAddr}"
+    topicBase = f"{MQTT_TOPIC}/{macAddr}"
     quality, rssi = wifiQuality(intfName)
 
     logging.info("Starting")
-    #### FIXME
-    print(f"{TOPIC_BASE}/cmd,Startup,{DEV_TYPE},{APPL_NAME},{APPL_VERSION},temp:.1f,q:.2f,rssi:d,{rssi}")
+    cmdTopic = f"{topicBase}/{SUB_TOPICS[SUB_TOPIC_COMMAND]}"
+    msg = f"Startup,{DEV_TYPE},{APPL_NAME},{APPL_VERSION},temp:.1f,q:.2f,rssi:d,{rssi}"
+    logging.info(f"{cmdTopic},{msg}")
+    res = client.publish(cmdTopic, payload=msg)
+    if res.rc:
+        logging.warning(f"Failed to publish startup message: {res}")
+        sys.exit(1)
+
+    dataTopic = f"{topicBase}/{SUB_TOPICS[SUB_TOPIC_DATA]}"
     while running:
         temperature = deviceTemperature()
         quality, rssi = wifiQuality(intfName)
-        #### FIXME
-        print(f"{TOPIC_BASE}/data,{temperature},{quality:.4f},{rssi}")
+        msg = f"{temperature},{quality:.4f},{rssi}"
+        logging.info(f"{dataTopic},{msg}")
+        res = client.publish(cmdTopic, payload=msg)
+        if res.rc:
+            logging.warning(f"Failed to publish sample message: {res}")
+            sys.exit(1)
+
         #### TODO think about decoupling sampling interval and watchdog timer
         time.sleep(options.sampleInterval)
     logging.info("Exiting")
+    client.loop_stop()
     return(0)
 
 
