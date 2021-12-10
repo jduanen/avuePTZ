@@ -3,7 +3,47 @@ Application for controlling and viewing video from AVUE G50IR-WB36N PZT camera
 
 ![AVUE PZT Camera](AVUE_G50IR-WB36N.jpg)
 
-## Connectors
+## Controller
+
+The controller is responsible for streaming video from the camera to a remote display, and receiving commands to direct the PZT (pan/zoom/tilt) platform as well as the other camera functions (e.g., zoom in/out, focus near/far/auto, backlight compensation, contrast, IR-mode, wiper, etc.).
+
+It is enclosed in a weatherproof (NEMA) box which connects to the Avue camera via its cable harnass and plugs into the 110VAC power.
+
+![Camera Controller](controller.jpg)
+
+### Software
+
+The Raspi uses it's internal H264 encoder to compress the video from the digitizer and streams it over the WiFi connection.  A good WiFi signal is required to ensure good quality video.
+
+The temperature and WiFi signal quality are continuously monitored and logged via my [SensorNet](https://github.com/jduanen/SensorNet) project.
+
+*TBD*
+
+
+### Hardware
+
+The control unit consists of a Raspberry Pi 3B+ with three USB dongles -- one to digitize the video, another to send (Pelco) commands to the camera via RS485, and a WiFi with external antenna.
+
+*TBD*
+
+#### NTSC Video Digitizer USB Dongle
+* ????
+
+#### DTech RS422/RS485 USB Dongle
+* idVendor=0403, idProduct=6001, bcdDevice= 6.00
+* FTDI USB Serial Device converter
+* /dev/ttyUSB0
+* install udev rules for USB dongle and reload udevd
+  - sudo cp ./99-dtech-rs422_485.rules /etc/udev/rules.d/
+  - sudo udevadm control --reload-rules
+  - sudo udevadm trigger
+
+#### WiFi Dongle
+* ????
+
+## Avue Camera
+
+### Connectors
   - Power
     * Red:    24VAC
     * Yellow: NC
@@ -29,24 +69,15 @@ Application for controlling and viewing video from AVUE G50IR-WB36N PZT camera
     * Purple: ALM6 (input)
     * Orange: ALM5 (input)
 
-## Presets
+### Presets
 * 62: Call to turn on and Save to turn off the IR light
 * 63: wiper on/off
 * 95: enter main OSD menu (or 9 twice within three secs)
 
-## Default settings:
+### Default settings:
 * 4800, N, 8, 1
 * Protocol: Pelco
 * Dome Address: 1
-
-## DTech RS422/RS485 USB Dongle
-* idVendor=0403, idProduct=6001, bcdDevice= 6.00
-* FTDI USB Serial Device converter
-* /dev/ttyUSB0
-* install udev rules for USB dongle and reload udevd
-  - sudo cp ./99-dtech-rs422_485.rules /etc/udev/rules.d/
-  - sudo udevadm control --reload-rules
-  - sudo udevadm trigger
 
 ## Pelco-D protocol
 * seven byte message:
