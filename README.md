@@ -3,9 +3,9 @@ Application for controlling and viewing video from an Avue G50IR-WB36N PZT camer
 
 ![Avue PZT Camera](AVUE_G50IR-WB36N.jpg)
 
-[Avue Camera Information](docs/avue.txt)
+[Avue Camera Information](docs/avue.md)
 
-[Pelco PZT Control Protocol Information](docs/pelco.txt)
+[Pelco PZT Control Protocol Information](docs/pelco.md)
 
 ## Controller
 
