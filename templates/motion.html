@@ -53,8 +53,11 @@
   $(function() {
     $('a#Focus').on('mousedown', function(e) {
       e.preventDefault();
-      $.getJSON('/focus', {'direction': e.target.value},
-        function(data) {console.log(data);});
+      if (e.target.value != undefined) {
+        console.log("FOCUS: " + e.target.value);
+        $.getJSON('/focus', {'direction': e.target.value},
+          function(data) {console.log(data);});
+      }
       return false;
     });
   });
@@ -66,6 +69,97 @@
       return false;
     });
   });
+  function autoFocusHandler() {
+    var checkbox = document.getElementById('AutoFocus');
+    var b = document.getElementsByName("Focus");
+    if (checkbox.checked == true) {
+      console.log("Enable AutoFocus");
+      for (let i = 0; i < 2; i++) {
+        b[i].disable = true;
+        b[i].style.visibility = "hidden";
+      }
+      $.getJSON('/autoFocus', {'auto': true});
+    } else {
+      console.log("Disable AutoFocus");
+      for (let i = 0; i < 2; i++) {
+        b[i].disable = false;
+        b[i].style.visibility = "visible";
+      }
+      $.getJSON('/autoFocus', {'auto': false});
+    }
+  }
+  $(function() {
+    $('a#Iris').on('mousedown', function(e) {
+      e.preventDefault();
+      if (e.target.value != undefined) {
+        console.log("IRIS: " + e.target.value);
+        $.getJSON('/iris', {'direction': e.target.value},
+          function(data) {console.log(data);});
+      }
+      return false;
+    });
+  });
+  $(function() {
+    $('a#Iris').on('mouseup', function(e) {
+      e.preventDefault();
+      $.getJSON('/iris', {'direction': "Stop"},
+        function(data) {console.log(data);});
+      return false;
+    });
+  });
+  function autoIrisHandler() {
+    var checkbox = document.getElementById('AutoIris');
+    var b = document.getElementsByName("Iris");
+    if (checkbox.checked == true) {
+      console.log("Enable AutoIris");
+      for (let i = 0; i < 2; i++) {
+        b[i].disable = true;
+        b[i].style.visibility = "hidden";
+      }
+      $.getJSON('/autoIris', {'auto': true});
+    } else {
+      console.log("Disable AutoIris");
+      for (let i = 0; i < 2; i++) {
+        b[i].disable = false;
+        b[i].style.visibility = "visible";
+      }
+      $.getJSON('/autoIris', {'auto': false});
+    }
+  }
+  function autoGainHandler() {
+    var checkbox = document.getElementById('AutoGain');
+    var b = document.getElementsByName("AGC");
+    if (checkbox.checked == true) {
+      console.log("Enable AGC");
+      for (let i = 0; i < 2; i++) {
+        b[i].disable = true;
+        b[i].style.visibility = "hidden";
+      }
+      $.getJSON('/autoGain', {'auto': true});
+    } else {
+      console.log("Disable AGC");
+      for (let i = 0; i < 2; i++) {
+        b[i].disable = false;
+        b[i].style.visibility = "visible";
+      }
+      $.getJSON('/autoGain', {'auto': false});
+    }
+  }
+  function irHandler() {
+    var sw = document.getElementById("IRSwitch");
+    console.log("IR mode: " + sw.checked);
+    $.getJSON('/IR', {'mode': sw.checked});
+  }
+  function awbHandler() {
+    var sw = document.getElementById("AWBSwitch");
+    console.log("AWB mode: " + sw.checked);
+    $.getJSON('/AWB', {'mode': sw.checked});
+  }
+  function blcHandler() {
+    var sw = document.getElementById("BLCSwitch");
+    console.log("BLC mode: " + sw.checked);
+    $.getJSON('/BLC', {'mode': sw.checked});
+  }
 </script>
 
 <section class="content">
@@ -140,22 +234,38 @@
   <a href=# id=Zoom><button type="button" class="momentaryBtn" name="Zoom" value="Out">Out</button></a>
   <br>
 
-  Focus:
+  Auto Focus:
+  <label class="switch">
+    <input type="checkbox" id="AutoFocus" onclick="autoFocusHandler()">
+    <div class="slider round"></div>
+  </label>
   <a href=# id=Focus><button type="button" class="momentaryBtn" name="Focus" value="Near">Near</button></a>
   <a href=# id=Focus><button type="button" class="momentaryBtn" name="Focus" value="Far">Far</button></a>
-  <a href=# id=Focus><button type="button" class="momentaryBtn" name="Focus" value="Auto">Auto</button></a>
   <br>
 
-  Iris:
+  Auto Iris:
+  <label class="switch">
+    <input type="checkbox" id="AutoIris" onclick="autoIrisHandler()">
+    <div class="slider round"></div>
+  </label>
   <a href=# id=Iris><button type="button" class="momentaryBtn" name="Iris" value="Open">Open</button></a>
   <a href=# id=Iris><button type="button" class="momentaryBtn" name="Iris" value="Close">Close</button></a>
-  <a href=# id=Iris><button type="button" class="momentaryBtn" name="Iris" value="Auto">Auto</button></a>
   <br>
 
-  AGC:
+  Auto AGC:
+  <label class="switch">
+    <input type="checkbox" id="AutoGain" onclick="autoGainHandler()">
+    <div class="slider round"></div>
+  </label>
   <a href=# id=AGC><button type="button" class="momentaryBtn" name="AGC" value="On">On</button></a>
   <a href=# id=AGC><button type="button" class="momentaryBtn" name="AGC" value="Off">Off</button></a>
-  <a href=# id=AGC><button type="button" class="momentaryBtn" name="AGC" value="Auto">Auto</button></a>
+  <br>
+
+  IR mode:
+  <label class="switch">
+    <input type="checkbox" id="IRSwitch" onclick="irHandler()">
+    <div class="slider round"></div>
+  </label>
   <br>
 
   Wiper: <a href=# id=Wiper><button type="button" class="momentaryBtn">Cycle</button></a>
@@ -163,13 +273,13 @@
 
   AWB:
   <label class="switch">
-    <input type="checkbox" id="AWBSwitch">
+    <input type="checkbox" id="AWBSwitch" onclick="awbHandler()">
     <div class="slider round"></div>
   </label>
 
   BLC:
   <label class="switch">
-    <input type="checkbox" id="BLCSwitch">
+    <input type="checkbox" id="BLCSwitch" onclick="blcHandler()">
     <div class="slider round"></div>
   </label>
 
