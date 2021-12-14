@@ -1,13 +1,17 @@
 # avuePZT
-Application for controlling and viewing video from AVUE G50IR-WB36N PZT camera
+Application for controlling and viewing video from an Avue G50IR-WB36N PZT camera
 
-![AVUE PZT Camera](AVUE_G50IR-WB36N.jpg)
+![Avue PZT Camera](AVUE_G50IR-WB36N.jpg)
+
+[Avue Camera Information](docs/avue.txt)
+
+[Pelco PZT Control Protocol Information](docs/pelco.txt)
 
 ## Controller
 
 The controller is responsible for streaming video from the camera to a remote display, and receiving commands to direct the PZT (pan/zoom/tilt) platform as well as the other camera functions (e.g., zoom in/out, focus near/far/auto, backlight compensation, contrast, IR-mode, wiper, etc.).
 
-It is enclosed in a weatherproof (NEMA) box which connects to the Avue camera via its cable harnass and plugs into the 110VAC power.
+It is enclosed in a weatherproof (NEMA) box which connects to the Avue camera via its cable harnass and plugs into the 110VAC power.  Enclosed is the (24 VAC) power supply for the Avue camera and a (USB +5 VDC) power supply for the Raspberry Pi and its peripherals.
 
 ![Camera Controller](controller.jpg)
 
@@ -15,10 +19,9 @@ It is enclosed in a weatherproof (NEMA) box which connects to the Avue camera vi
 
 The control unit consists of a Raspberry Pi 3B+ with three USB dongles -- one to digitize the video, another to send (Pelco) commands to the camera via RS485, and a WiFi with external antenna.
 
-*TBD*
-
 #### NTSC Video Digitizer USB Dongle
-* ????
+* Fushicai USBTV007 Video Grabber (EasyCAP)
+  - ID 1b71:3002
 
 #### DTech RS422/RS485 USB Dongle
 * idVendor=0403, idProduct=6001, bcdDevice= 6.00
@@ -30,16 +33,14 @@ The control unit consists of a Raspberry Pi 3B+ with three USB dongles -- one to
   - sudo udevadm trigger
 
 #### WiFi Dongle
-* ????
+* Ralink Technology, Corp. RT5370 Wireless Adapter
+  - ID 148f:5370
+* disable on-board WiFi
+  - use this as it has an external antenna
 
 #### Video
 * Video capture device: Fushicai USBTV007 Video Grabber [EasyCAP]
   - ID 1b71:3002
-* Local viewing with mplayer:
-  - mplayer tv:// -tv device=/dev/video4:input=0:norm=NTSC -vo x11
-* Remote serving with vlc:
-  - source device: v4l2:///dev/video0
-  - 
 
 ### Software
 
@@ -47,20 +48,19 @@ The Raspi uses it's internal H264 encoder to compress the video from the digitiz
 
 The temperature and WiFi signal quality are continuously monitored and logged via my [SensorNet](https://github.com/jduanen/SensorNet) project.
 
-*TBD*
-
 #### Temperature
-* command-line tool to read system temperature: vcgencmd measure_temp
+* command-line tool to read system temperature
+  - vcgencmd measure_temp
 
 #### RSSI
-* iwlist wlan0 scan | egrep dBm
+* command-line tool to get the WiFi signal strength
+  - iwlist wlan0 scan | egrep dBm
 
 #### Web-Server
 * Flask-based python app
-* 
+* Using the ???? web server
 
 #### Streaming Video
-
 * server
   - ffmpeg -fflags +genpts+igndts -i /dev/video0 -c:v h264_omx -an -b:v 12M -f mpegts - | cvlc -I dummy - --sout='#std{access=http,mux=ts,dst=:8554}'
 
@@ -92,6 +92,12 @@ cvlc -vvv v4l2:///dev/video0:chroma=mp2v --v4l2-width 1280 --v4l2-height 720 --s
 
 * test port access
   - python3 -m http.server 8000
+
+* Local viewing with mplayer:
+  - mplayer tv:// -tv device=/dev/video4:input=0:norm=NTSC -vo x11
+
+* Remote serving with vlc:
+  - source device: v4l2:///dev/video0
 
 --------------------------------------------------------------------------------------------------
 * OpenMAX and MMAL are the only platform APIs available on Raspi
