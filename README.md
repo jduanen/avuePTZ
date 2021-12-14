@@ -20,12 +20,11 @@ It is enclosed in a weatherproof (NEMA) box which connects to the Avue camera vi
 The control unit consists of a Raspberry Pi 3B+ with three USB dongles -- one to digitize the video, another to send (Pelco) commands to the camera via RS485, and a WiFi with external antenna.
 
 #### NTSC Video Digitizer USB Dongle
-![Video Digitizer](images/USBTV007.png)
 * Fushicai USBTV007 Video Grabber (EasyCAP)
   - ID 1b71:3002
+![Video Digitizer](images/USBTV007.png)
 
 #### Future Technology Devices USB to RS485 Dongle
-![RS485 Converter](images/FTD_RS485.png)
 * idVendor=0403, idProduct=6001, bcdDevice= 6.00
 * FTDI USB Serial Device converter
 * /dev/ttyUSB0
@@ -33,13 +32,14 @@ The control unit consists of a Raspberry Pi 3B+ with three USB dongles -- one to
   - sudo cp ./99-dtech-rs422_485.rules /etc/udev/rules.d/
   - sudo udevadm control --reload-rules
   - sudo udevadm trigger
+![RS485 Converter](images/FTD_RS485.png)
 
 #### WiFi Dongle
-![WiFi Dongle](images/RT5370.png)
 * Ralink Technology, Corp. RT5370 Wireless Adapter
   - ID 148f:5370
 * disable on-board WiFi
   - use this as it has an external antenna
+![WiFi Dongle](images/RT5370.png)
 
 ### Software
 
