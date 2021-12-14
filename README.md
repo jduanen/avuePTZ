@@ -25,7 +25,7 @@ The control unit consists of a Raspberry Pi 3B+ with three USB dongles -- one to
   - ID 1b71:3002
 
 #### Future Technology Devices USB to RS485 Dongle
-![RS485 Converter](images/ftdRS485.jpg)
+![RS485 Converter](images/FTD_RS485.png)
 * idVendor=0403, idProduct=6001, bcdDevice= 6.00
 * FTDI USB Serial Device converter
 * /dev/ttyUSB0
