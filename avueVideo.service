@@ -5,13 +5,13 @@ After=network-online.target
 [Service]
 User=pi
 WorkingDirectory=/home/pi/Code/avuePZT
-ExecStart=/bin/bash -c 'cd /home/jdn/Code/avuePZT && ./avueVideo.sh'
+ExecStart=/bin/bash -c 'cd /home/pi/Code/avuePZT && ./avueVideo.sh'
 StandardOutput=syslog
-Restart=on-failure
+Restart=always
 WatchdogSec=30s
 StartLimitInterval=5min
 StartLimitBurst=4
-StartLimitAction=reboot-force
+StartLimitAction=none
 NotifyAccess=all
 
 [Install]

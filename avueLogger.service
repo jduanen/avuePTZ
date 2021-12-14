@@ -5,13 +5,13 @@ After=network-online.target
 [Service]
 User=pi
 WorkingDirectory=/home/pi/Code/avuePZT
-ExecStart=/bin/bash -c 'cd /home/jdn/Code/avuePZT && python3 ./avueLogger.py'
+ExecStart=/bin/bash -c 'cd /home/pi/Code/avuePZT && python3 ./avueLogger.py'
 StandardOutput=syslog
-Restart=on-failure
+Restart=always
 WatchdogSec=90s
 StartLimitInterval=5min
 StartLimitBurst=4
-StartLimitAction=reboot-force
+StartLimitAction=none
 NotifyAccess=all
 
 [Install]
