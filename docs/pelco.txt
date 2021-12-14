@@ -1,0 +1,84 @@
+# Pelco-D protocol
+* seven byte message:
+  - Sync: 0xFF
+  - Address: 0x??
+  - Command1:
+    * [7]: Sense bit
+    * [6-5]: 0
+    * [4]: Auto/manual scan
+    * [3]: Camera on/off
+    * [2]: Iris close
+    * [1]: Iris open
+    * [0]: Focus near
+  - Command2:
+    * [7]: Focus far
+    * [6]: Zoom wide
+    * [5]: Zoom tele
+    * [4]: Down
+    * [3]: Up
+    * [2]: Left
+    * [1]: Right
+    * [0]: 0
+  - Data1:
+    * Pan Speed:
+      - 0x00: Stop
+      - 0x01-0x3F: High speed
+      - 0xFF: Turbo speed
+  - Data2:
+    * Tilt Speed:
+      - 0x00 (stop) - 0x3F (max speed)
+  - Checksum: 8b (modulo 256) sum of bytes 2-6
+* Extended Commands
+  - response is four bytes long:
+    * Sync: 0xFF
+    * Address: 0x??
+    * Alarm Info:
+      - [7]: Alarm 8
+      - [6]: Alarm 7
+      - [5]: Alarm 6
+      - [4]: Alarm 5
+      - [3]: Alarm 4
+      - [2]: Alarm 3
+      - [1]: Alarm 2
+      - [0]: Alarm 1
+    * Checksum: 8b (modulo 256) sum of bytes 2-6
+  - Set Preset:       0x00, 0x03, 0x00, 1-20
+  - Clear Preset:     0x00, 0x05, 0x00, 1-20
+  - Goto Preset:      0x00, 0x07, 0x00, 1-20
+  - Flip:             0x00, 0x07, 0x00, 21
+  - Goto Zero Pan:    0x00, 0x07, 0x00, 22
+  - Set Aux:         0x00, 0x09, 0x00, 1-8
+  - Clear Aux:        0x00, 0x0B, 0x00, 1-8
+  - Remote Reset:     0x00, 0x0F, 0x00, 0x00
+  - Set Zone Start:   0x00, 0x11, 0x00, 1-8
+  - Set Zone End:     0x00, 0x13, 0x00, 1-8
+  - Write Char:       0x00, 0x15, 0-28 (X pos.), 0x?? (ASCII val.)
+  - Clear Screen:     0x00, 0x17, 0x00, 0x00
+  - Alarm ACK:        0x00, 0x19, 0x00, 0x?? (alarm #)
+  - Zone Scan On:     0x00, 0x1B, 0x00, 0x00
+  - Zone Scan Off:    0x00, 0x1D, 0x00, 0x00
+  - Pattern Start:    0x00, 0x1F, 0x00, 0x00
+  - Pattern Stop:     0x00, 0x21, 0x00, 0x00
+  - Run Pattern:      0x00, 0x23, 0x00, 0x00
+  - Zoom Speed:       0x00, 0x25, 0x00, 0-3
+  - Focus Speed:      0x00, 0x27, 0x00, 0-3
+  - Reset Camera:     0x00, 0x29, 0x00, 0x00
+  - Auto-Focus:       0x00, 0x2B, 0x00, 0-2 (auto/on/off)
+  - Auto-Iris:        0x00, 0x2D, 0x00, 0-2 (auto/on/off)
+  - AGC:              0x00, 0x2F, 0x00, 0-2 (auto/on/off)
+  - Backlight Comp:   0x00, 0x31, 0x00, 1-2 (on/off)
+  - AWB:              0x00, 0x33, 0x00, 1-2 (on/off)
+  - Phase Delay Mode: 0x00, 0x35, 0x00, 0x00
+  - Shutter Speed:    0x00, 0x37, 0x??, 0x??
+  - Line Lock Delay:  0x00-0x01, 0x39, 0x??, 0x??
+  - White Balance RB: 0x00-0x01, 0x3B, 0x??, 0x??
+  - White Balance MG: 0x00-0x01, 0x3D, 0x??, 0x??
+  - Adjust Gain:      0x00-0x01, 0x3F, 0x??, 0x??
+  - Auto-Iris Level:  0x00-0x01, 0x41, 0x??, 0x??
+  - Auto-Iris Peak:   0x00-0x01, 0x43, 0x??, 0x??
+  - Query:            0x00, 0x45, 0x??, 0x?? (point-to-point mode only)
+    * Response to Query Command:
+      - Sync: 0xFF
+      - Address: 0x??
+      - Part Number (15 bytes)
+      - Checksum 0x??
