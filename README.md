@@ -35,14 +35,11 @@ The control unit consists of a Raspberry Pi 3B+ with three USB dongles -- one to
   - sudo udevadm trigger
 
 #### WiFi Dongle
+![WiFi Dongle](images/RT5370.png)
 * Ralink Technology, Corp. RT5370 Wireless Adapter
   - ID 148f:5370
 * disable on-board WiFi
   - use this as it has an external antenna
-
-#### Video
-* Video capture device: Fushicai USBTV007 Video Grabber [EasyCAP]
-  - ID 1b71:3002
 
 ### Software
 
