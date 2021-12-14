@@ -323,7 +323,7 @@ def run(options):
         return("nothing")
 
     @app.route('/iris')
-    def focus():
+    def iris():
         d = request.args.get('direction')
         speed = 2  #### FIXME
         if d == 'Stop':
