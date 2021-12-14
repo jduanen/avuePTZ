@@ -241,7 +241,7 @@ class Pelco():
         """Switch to manual iris and open/close iris
 
           Inputs:
-            focusDir: bool where True means to focus near and False is focus far
+            irisDir: bool where True means to open and False is to close the iris
             speed: optional int between 0 and 3 indicating increasing speed
 
           Returns: list of bool alarm indications
@@ -392,7 +392,7 @@ class Pelco():
 
           Inputs:
             mode: bool that turns auto-focus on if True, off if False, and
-              sets it to auto-focus if None
+              sets it to auto mode if None
         """
         self.extendedCommand('AutoFocus', arg2=0 if mode is None else 1 if mode else 2)
 
@@ -401,7 +401,7 @@ class Pelco():
 
           Inputs:
             mode: bool that turns auto-iris on if True, off if False, and
-              sets it to auto-iris if None
+              sets it to auto mode if None
         """
         self.extendedCommand('AutoIris', arg2=0 if mode is None else 1 if mode else 2)
 
@@ -420,7 +420,7 @@ class Pelco():
           Inputs:
             mode: bool that turns backlight compensation on if True and off if False
         """
-        self.extendedCommand('AGC', arg2=1 if mode else 0)
+        self.extendedCommand('BLC', arg2=1 if mode else 0)
 
     def AWB(self, mode):
         """Turn auto white balance function on or off
