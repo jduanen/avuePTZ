@@ -316,6 +316,36 @@ def run(options):
             cam.focus(direction, speed)
         return("nothing")
 
+    @app.route('/autoFocus')
+    def autoFocus():
+        cam.autoFocus(request.args.get('auto'))
+        logging.debug(f"AUTO_FOCUS: {request.args.get('auto')}")
+        return("nothing")
+
+    @app.route('/iris')
+    def focus():
+        d = request.args.get('direction')
+        speed = 2  #### FIXME
+        if d == 'Stop':
+            logging.debug("IRIS: Stop")
+            cam.stop()
+        else:
+            direction = d == "Open"
+            logging.debug(f"IRIS: {direction}")
+            cam.iris(direction)
+        return("nothing")
+
+    @app.route('/autoIris')
+    def autoIris():
+        cam.autoIris(request.args.get('auto'))
+        logging.debug(f"AUTO_IRIS: {request.args.get('auto')}")
+        return("nothing")
+
+    @app.route('/ir')
+    def ir():
+        logging.error("IR Mode not implemented")
+        return("nothing")
+
     app.run(host="0.0.0.0", port="8080")
     logging.debug("Exiting")
     return(0)
