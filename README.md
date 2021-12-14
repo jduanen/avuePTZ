@@ -22,6 +22,7 @@ The control unit consists of a Raspberry Pi 3B+ with three USB dongles -- one to
 #### NTSC Video Digitizer USB Dongle
 * Fushicai USBTV007 Video Grabber (EasyCAP)
   - ID 1b71:3002
+
 ![Video Digitizer](images/USBTV007.png)
 
 #### Future Technology Devices USB to RS485 Dongle
@@ -32,6 +33,7 @@ The control unit consists of a Raspberry Pi 3B+ with three USB dongles -- one to
   - sudo cp ./99-dtech-rs422_485.rules /etc/udev/rules.d/
   - sudo udevadm control --reload-rules
   - sudo udevadm trigger
+
 ![RS485 Converter](images/FTD_RS485.png)
 
 #### WiFi Dongle
@@ -39,6 +41,7 @@ The control unit consists of a Raspberry Pi 3B+ with three USB dongles -- one to
   - ID 148f:5370
 * disable on-board WiFi
   - use this as it has an external antenna
+
 ![WiFi Dongle](images/RT5370.png)
 
 ### Software
