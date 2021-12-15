@@ -126,6 +126,25 @@
       $.getJSON('/autoIris', {'auto': false});
     }
   }
+  $(function() {
+    $('a#AGC').on('mousedown', function(e) {
+      e.preventDefault();
+      if (e.target.value != undefined) {
+        console.log("AGC: " + e.target.value);
+        $.getJSON('/AGC', {'mode': e.target.value},
+          function(data) {console.log(data);});
+      }
+      return false;
+    });
+  });
+  $(function() {
+    $('a#AGC').on('mouseup', function(e) {
+      e.preventDefault();
+      $.getJSON('/AGC', {'mode': "Stop"},
+        function(data) {console.log(data);});
+      return false;
+    });
+  });
   function autoGainHandler() {
     var checkbox = document.getElementById('AutoGain');
     var b = document.getElementsByName("AGC");
@@ -268,19 +287,21 @@
   </label>
   <br>
 
-  Wiper: <a href=# id=Wiper><button type="button" class="momentaryBtn">Cycle</button></a>
-  <br>
-
   AWB:
   <label class="switch">
     <input type="checkbox" id="AWBSwitch" onclick="awbHandler()">
     <div class="slider round"></div>
   </label>
+  <br>
 
   BLC:
   <label class="switch">
     <input type="checkbox" id="BLCSwitch" onclick="blcHandler()">
     <div class="slider round"></div>
   </label>
+  <br>
+
+  Wiper: <a href=# id=Wiper><button type="button" class="momentaryBtn">Cycle</button></a>
+  <br>
 
 </section>
