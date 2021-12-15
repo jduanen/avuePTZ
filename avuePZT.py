@@ -357,27 +357,30 @@ def run(options):
 
     @app.route('/autoGain')
     def autoGain():
-        cam.AGC(request.args.get('auto'))
-        logging.debug(f"AGC: {request.args.get('auto')}")
+        auto = request.args.get('auto') == 'true'
+        cam.AGC(auto)
+        logging.debug(f"AGC: {auto}")
         return("nothing")
 
     @app.route('/IR')
     def ir():
-        mode = request.args.get('mode')
+        mode = request.args.get('mode') == 'true'
         logging.debug(f"IR: {mode}")
         cam.irMode(mode)
         return("nothing")
 
     @app.route('/AWB')
     def awb():
-        logging.debug(f"AWB: {request.args.get('mode')}")
-        cam.AWB(request.args.get('mode'))
+        mode = request.args.get('mode') == 'true'
+        logging.debug(f"AWB: {mode}")
+        cam.AWB(mode)
         return("nothing")
 
     @app.route('/BLC')
     def blc():
-        logging.debug(f"BLC: {request.args.get('mode')}")
-        cam.BLC(request.args.get('mode'))
+        mode = request.args.get('mode') == 'true'
+        logging.debug(f"BLC: {mode}")
+        cam.BLC(mode)
         return("nothing")
 
     app.run(host="0.0.0.0", port="8080")
