@@ -1,0 +1,308 @@
+<!doctype html>
+<title>AVUE PZT</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+<script type=text/javascript>
+  window.contextmenu = function(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    return false;
+  }
+  $(function() {
+    $('a#Motion').on('mousedown', function(e) {
+      e.preventDefault();
+      $.getJSON('/move', {'direction': e.target.name, 'speed': e.target.value},
+        function(data) {console.log(data);});
+      return false;
+    });
+  });
+  $(function() {
+    $('a#Motion').on('mouseup', function(e) {
+      e.preventDefault();
+      $.getJSON('/move', {'direction': "Stop", 'speed': 0},
+        function(data) {console.log(data);});
+      return false;
+    });
+  });
+  $(function() {
+    $('a#Wiper').on('click', function(e) {
+      e.preventDefault();
+      $.getJSON('/wiper', function(data) {console.log(data);});
+      return false;
+    });
+  });
+  function mouseCoordinates(event) {
+    console.log(event.clientX.toString() + "," + event.clientY.toString())
+  }
+  $(function() {
+    $('a#Zoom').on('mousedown', function(e) {
+      e.preventDefault();
+      $.getJSON('/zoom', {'direction': e.target.value},
+        function(data) {console.log(data);});
+      return false;
+    });
+  });
+  $(function() {
+    $('a#Zoom').on('mouseup', function(e) {
+      e.preventDefault();
+      $.getJSON('/zoom', {'direction': "Stop"},
+        function(data) {console.log(data);});
+      return false;
+    });
+  });
+
+  function zoomHandler() {
+    var b = document.getElementById("Zoom");
+    console.log("ZOOM: " + b.value);
+  };
+  function autoFocusHandler() {
+    var checkbox = document.getElementById('AutoFocus');
+    var b = document.getElementsByName("Focus");
+    if (checkbox.checked == true) {
+      console.log("Enable AutoFocus");
+      for (let i = 0; i < 2; i++) {
+        b[i].disable = true;
+        b[i].style.visibility = "hidden";
+      }
+      $.getJSON('/autoFocus', {'auto': true});
+    } else {
+      console.log("Disable AutoFocus");
+      for (let i = 0; i < 2; i++) {
+        b[i].disable = false;
+        b[i].style.visibility = "visible";
+      }
+      $.getJSON('/autoFocus', {'auto': false});
+    }
+  };
+  $(function() {
+    $('a#Iris').on('mousedown', function(e) {
+      e.preventDefault();
+      if (e.target.value != undefined) {
+        console.log("IRIS: " + e.target.value);
+        $.getJSON('/iris', {'direction': e.target.value},
+          function(data) {console.log(data);});
+      }
+      return false;
+    });
+  });
+  $(function() {
+    $('a#Iris').on('mouseup', function(e) {
+      e.preventDefault();
+      $.getJSON('/iris', {'direction': "Stop"},
+        function(data) {console.log(data);});
+      return false;
+    });
+  });
+  function autoIrisHandler() {
+    var checkbox = document.getElementById('AutoIris');
+    var b = document.getElementsByName("Iris");
+    if (checkbox.checked == true) {
+      console.log("Enable AutoIris");
+      for (let i = 0; i < 2; i++) {
+        b[i].disable = true;
+        b[i].style.visibility = "hidden";
+      }
+      $.getJSON('/autoIris', {'auto': true});
+    } else {
+      console.log("Disable AutoIris");
+      for (let i = 0; i < 2; i++) {
+        b[i].disable = false;
+        b[i].style.visibility = "visible";
+      }
+      $.getJSON('/autoIris', {'auto': false});
+    }
+  };
+  $(function() {
+    $('a#AGC').on('mousedown', function(e) {
+      e.preventDefault();
+      if (e.target.value != undefined) {
+        console.log("AGC: " + e.target.value);
+        $.getJSON('/AGC', {'mode': e.target.value},
+          function(data) {console.log(data);});
+      }
+      return false;
+    });
+  });
+  $(function() {
+    $('a#AGC').on('mouseup', function(e) {
+      e.preventDefault();
+      $.getJSON('/AGC', {'mode': "Stop"},
+        function(data) {console.log(data);});
+      return false;
+    });
+  });
+  function autoGainHandler() {
+    var checkbox = document.getElementById('AutoGain');
+    var b = document.getElementsByName("AGC");
+    if (checkbox.checked == true) {
+      console.log("Enable AGC");
+      for (let i = 0; i < 2; i++) {
+        b[i].disabled = true;
+        b[i].style.visibility = "hidden";
+      }
+      $.getJSON('/autoGain', {'auto': true});
+    } else {
+      console.log("Disable AGC");
+      for (let i = 0; i < 2; i++) {
+        b[i].disabled = false;
+        b[i].style.visibility = "visible";
+      }
+      $.getJSON('/autoGain', {'auto': false});
+    }
+  };
+  function irHandler() {
+    var sw = document.getElementById("IRSwitch");
+    console.log("IR mode: " + sw.checked);
+    $.getJSON('/IR', {'mode': sw.checked});
+  };
+  function awbHandler() {
+    var sw = document.getElementById("AWBSwitch");
+    console.log("AWB mode: " + sw.checked);
+    $.getJSON('/AWB', {'mode': sw.checked});
+  };
+  function blcHandler() {
+    var sw = document.getElementById("BLCSwitch");
+    console.log("BLC mode: " + sw.checked);
+    $.getJSON('/BLC', {'mode': sw.checked});
+  };
+  function wiperHandler() {
+    var btn = document.getElementById("Wiper");
+    if ((btn.checked == true) && (btn.disabled == false)) {
+      btn.disabled = true;
+      setTimeout(function(){
+                  var b = document.getElementById("Wiper");
+                  b.disabled = false;
+                  b.checked = false;},
+                 30000);
+      $.getJSON('/wiper', function(data) {console.log(data);});
+    }
+  };
+</script>
+
+<section class="content">
+  <h3>Move</h3>
+
+    <div class='movement'>
+      <div class='move-buttons'>
+            <a href=# id=Motion><button type="button" class='btn' name='LeftUp' value=255>&#8662</button></a>
+            <a href=# id=Motion><button type="button" class='btn'></button></a>
+            <a href=# id=Motion><button type="button" class='btn'></button></a>
+            <a href=# id=Motion><button type="button" class='btn' name='Up' value=255>&#8657</button></a>
+            <a href=# id=Motion><button type="button" class='btn'></button></a>
+            <a href=# id=Motion><button type="button" class='btn'></button></a>
+            <a href=# id=Motion><button type="button" class='btn' name='RightUp' value=255>&#8663</button></a>
+
+            <a href=# id=Motion><button type="button" class='btn'></button></a>
+            <a href=# id=Motion><button type="button" class='btn' name='LeftUp' value=32>&#8598</button></a>
+            <a href=# id=Motion><button type="button" class='btn'></button></a>
+            <a href=# id=Motion><button type="button" class='btn' name='Up' value=32>&#8593</button></a>
+            <a href=# id=Motion><button type="button" class='btn'></button></a>
+            <a href=# id=Motion><button type="button" class='btn' name='RightUp' value=32>&#8599</button></a>
+            <a href=# id=Motion><button type="button" class='btn'></button></a>
+
+            <a href=# id=Motion><button type="button" class='btn'></button></a>
+            <a href=# id=Motion><button type="button" class='btn'></button></a>
+            <a href=# id=Motion><button type="button" class='btn' name='LeftUp' value=16>&#8598</button></a>
+            <a href=# id=Motion><button type="button" class='btn' name='Up' value=16>&#8673</button></a>
+            <a href=# id=Motion><button type="button" class='btn' name='RightUp' value=16>&#8599</button></a>
+            <a href=# id=Motion><button type="button" class='btn'></button></a>
+            <a href=# id=Motion><button type="button" class='btn'></button></a>
+
+            <a href=# id=Motion><button type="button" class='btn' name='Left' value=255>&#8656</button></a>
+            <a href=# id=Motion><button type="button" class='btn' name='Left' value=32>&#8592</button></a>
+            <a href=# id=Motion><button type="button" class='btn' name='Left' value=16>&#8672</button></a>
+            <a href=# id=Motion><button type="button" class='btn' name='Stop' value=0>X</button></a>
+            <a href=# id=Motion><button type="button" class='btn' name='Right' value=16>&#8674</button></a>
+            <a href=# id=Motion><button type="button" class='btn' name='Right' value=32>&#8594</button></a>
+            <a href=# id=Motion><button type="button" class='btn' name='Right' value=255>&#8658</button></a>
+
+            <a href=# id=Motion><button type="button" class='btn'></button></a>
+            <a href=# id=Motion><button type="button" class='btn'></button></a>
+            <a href=# id=Motion><button type="button" class='btn' name='LeftDown' value=16>&#8601</button></a>
+            <a href=# id=Motion><button type="button" class='btn' name='Down' value=16>&#8675</button></a>
+            <a href=# id=Motion><button type="button" class='btn' name='RightDown' value=16>&#8600</button></a>
+            <a href=# id=Motion><button type="button" class='btn'></button></a>
+            <a href=# id=Motion><button type="button" class='btn'></button></a>
+
+            <a href=# id=Motion><button type="button" class='btn'></button></a>
+            <a href=# id=Motion><button type="button" class='btn' name='LeftDown' value=32>&#8601</button></a>
+            <a href=# id=Motion><button type="button" class='btn'></button></a>
+            <a href=# id=Motion><button type="button" class='btn' name='Down' value=32>&#8595</button></a>
+            <a href=# id=Motion><button type="button" class='btn'></button></a>
+            <a href=# id=Motion><button type="button" class='btn' name='RightDown' value=32>&#8600</button></a>
+            <a href=# id=Motion><button type="button" class='btn'></button></a>
+
+            <a href=# id=Motion><button type="button" class='btn' name='LeftDown' value=255>&#8665</button></a>
+            <a href=# id=Motion><button type="button" class='btn'></button></a>
+            <a href=# id=Motion><button type="button" class='btn'></button></a>
+            <a href=# id=Motion><button type="button" class='btn' name='Down' value=255>&#8659</button></a>
+            <a href=# id=Motion><button type="button" class='btn'></button></a>
+            <a href=# id=Motion><button type="button" class='btn'></button></a>
+            <a href=# id=Motion><button type="button" class='btn' name='RightDown' value=255>&#8664</button></a>
+      </div>
+    </div>
+</section>
+
+<section class="content">
+  <h3>Control</h3>
+
+  Zoom:
+  <a href=# id=Zoom><button type="button" class="momentaryBtn" name="Zoom" value="In" onclick="zoomHandler()">In</button></a>
+  <a href=# id=Zoom><button type="button" class="momentaryBtn" name="Zoom" value="Out" onclick="zoomHandler()">Out</button></a>
+  <br>
+
+  Auto Focus:
+  <label class="switch">
+    <input type="checkbox" id="AutoFocus" onclick="autoFocusHandler()">
+    <div class="slider round"></div>
+  </label>
+  <a href=# id=Focus><button type="button" class="momentaryBtn" name="Focus" value="Near">Near</button></a>
+  <a href=# id=Focus><button type="button" class="momentaryBtn" name="Focus" value="Far">Far</button></a>
+  <br>
+
+  Auto Iris:
+  <label class="switch">
+    <input type="checkbox" id="AutoIris" onclick="autoIrisHandler()">
+    <div class="slider round"></div>
+  </label>
+  <a href=# id=Iris><button type="button" class="momentaryBtn" name="Iris" value="Open">Open</button></a>
+  <a href=# id=Iris><button type="button" class="momentaryBtn" name="Iris" value="Close">Close</button></a>
+  <br>
+
+  Auto AGC:
+  <label class="switch">
+    <input type="checkbox" id="AutoGain" onclick="autoGainHandler()">
+    <div class="slider round"></div>
+  </label>
+  <a href=# id=AGC><button type="button" class="momentaryBtn" name="AGC" value="On">On</button></a>
+  <a href=# id=AGC><button type="button" class="momentaryBtn" name="AGC" value="Off">Off</button></a>
+  <br>
+
+  IR mode:
+  <label class="switch">
+    <input type="checkbox" id="IRSwitch" onclick="irHandler()">
+    <div class="slider round"></div>
+  </label>
+  <br>
+
+  AWB:
+  <label class="switch">
+    <input type="checkbox" id="AWBSwitch" onclick="awbHandler()">
+    <div class="slider round"></div>
+  </label>
+  <br>
+
+  BLC:
+  <label class="switch">
+    <input type="checkbox" id="BLCSwitch" onclick="blcHandler()">
+    <div class="slider round"></div>
+  </label>
+  <br>
+
+  Wiper:
+  <label class="switch">
+    <input type="checkbox" id="Wiper" onclick="wiperHandler()">
+    <div class="slider round"></div>
+  </label>
+
+</section>
