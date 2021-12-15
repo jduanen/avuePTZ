@@ -226,6 +226,7 @@ class AVUE(Pelco):
           Inputs:
             onOff: bool that turn the IR illuminator on if True and off if False
         """
+        logging.debug(f"IR: {onOff}")
         self.preset("Call" if onOff else "Set", 62)
 
     def wiper(self):
