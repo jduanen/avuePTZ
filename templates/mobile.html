@@ -34,46 +34,7 @@
   function mouseCoordinates(event) {
     console.log(event.clientX.toString() + "," + event.clientY.toString())
   }
-  $(function() {
-    $('a#Zoom').on('mousedown', function(e) {
-      e.preventDefault();
-      $.getJSON('/zoom', {'direction': e.target.value},
-        function(data) {console.log(data);});
-      return false;
-    });
-  });
-  $(function() {
-    $('a#Zoom').on('mouseup', function(e) {
-      e.preventDefault();
-      $.getJSON('/zoom', {'direction': "Stop"},
-        function(data) {console.log(data);});
-      return false;
-    });
-  });
 
-  function zoomHandler() {
-    var b = document.getElementById("Zoom");
-    console.log("ZOOM: " + b.value);
-  };
-  function autoFocusHandler() {
-    var checkbox = document.getElementById('AutoFocus');
-    var b = document.getElementsByName("Focus");
-    if (checkbox.checked == true) {
-      console.log("Enable AutoFocus");
-      for (let i = 0; i < 2; i++) {
-        b[i].disable = true;
-        b[i].style.visibility = "hidden";
-      }
-      $.getJSON('/autoFocus', {'auto': true});
-    } else {
-      console.log("Disable AutoFocus");
-      for (let i = 0; i < 2; i++) {
-        b[i].disable = false;
-        b[i].style.visibility = "visible";
-      }
-      $.getJSON('/autoFocus', {'auto': false});
-    }
-  };
   $(function() {
     $('a#Iris').on('mousedown', function(e) {
       e.preventDefault();
@@ -93,25 +54,6 @@
       return false;
     });
   });
-  function autoIrisHandler() {
-    var checkbox = document.getElementById('AutoIris');
-    var b = document.getElementsByName("Iris");
-    if (checkbox.checked == true) {
-      console.log("Enable AutoIris");
-      for (let i = 0; i < 2; i++) {
-        b[i].disable = true;
-        b[i].style.visibility = "hidden";
-      }
-      $.getJSON('/autoIris', {'auto': true});
-    } else {
-      console.log("Disable AutoIris");
-      for (let i = 0; i < 2; i++) {
-        b[i].disable = false;
-        b[i].style.visibility = "visible";
-      }
-      $.getJSON('/autoIris', {'auto': false});
-    }
-  };
   $(function() {
     $('a#AGC').on('mousedown', function(e) {
       e.preventDefault();
@@ -177,6 +119,71 @@
       $.getJSON('/wiper', function(data) {console.log(data);});
     }
   };
+
+
+
+
+
+  function zoomHandler(e) {
+    var dir = e.target.value;
+    console.log("ZOOM: " + dir);
+    $.getJSON('/zoom', {'direction': dir}, function(data) {console.log(data);});
+    setTimeout(function(){$.getJSON('/zoom', {'direction': "Stop"}, function(data) {console.log(data);});},
+               500);
+  };
+  function focusHandler(e) {
+    var dir = e.target.value;
+    console.log("FOCUS: " + dir);
+    $.getJSON('/focus', {'direction': dir}, function(data) {console.log(data);});
+    setTimeout(function(){$.getJSON('/focus', {'direction': "Stop"}, function(data) {console.log(data);});},
+               300);
+  };
+  function autoFocusHandler() {
+    var checkbox = document.getElementById('AutoFocus');
+    var b = document.getElementsByName("Focus");
+    if (checkbox.checked == true) {
+      console.log("Enable AutoFocus");
+      for (let i = 0; i < 2; i++) {
+        b[i].disable = true;
+        b[i].style.visibility = "hidden";
+      }
+      $.getJSON('/autoFocus', {'auto': true});
+    } else {
+      console.log("Disable AutoFocus");
+      for (let i = 0; i < 2; i++) {
+        b[i].disable = false;
+        b[i].style.visibility = "visible";
+      }
+      $.getJSON('/autoFocus', {'auto': false});
+    }
+  };
+  function irisHandler(e) {
+    var dir = e.target.value;
+    console.log("IRIS: " + dir);
+    $.getJSON('/iris', {'direction': dir}, function(data) {console.log(data);});
+    setTimeout(function(){$.getJSON('/iris', {'direction': "Stop"}, function(data) {console.log(data);});},
+               300);
+  };
+  function autoIrisHandler() {
+    var checkbox = document.getElementById('AutoIris');
+    var b = document.getElementsByName("Iris");
+    if (checkbox.checked == true) {
+      console.log("Enable AutoIris");
+      for (let i = 0; i < 2; i++) {
+        b[i].disable = true;
+        b[i].style.visibility = "hidden";
+      }
+      $.getJSON('/autoIris', {'auto': true});
+    } else {
+      console.log("Disable AutoIris");
+      for (let i = 0; i < 2; i++) {
+        b[i].disable = false;
+        b[i].style.visibility = "visible";
+      }
+      $.getJSON('/autoIris', {'auto': false});
+    }
+  };
+
 </script>
 
 <section class="content">
@@ -247,8 +254,8 @@
   <h3>Control</h3>
 
   Zoom:
-  <a href=# id=Zoom><button type="button" class="momentaryBtn" name="Zoom" value="In" onclick="zoomHandler()">In</button></a>
-  <a href=# id=Zoom><button type="button" class="momentaryBtn" name="Zoom" value="Out" onclick="zoomHandler()">Out</button></a>
+  <a href=# id=Zoom><button type="button" class="momentaryBtn" name="Zoom" value="In" onclick="zoomHandler(event)">In</button></a>
+  <a href=# id=Zoom><button type="button" class="momentaryBtn" name="Zoom" value="Out" onclick="zoomHandler(event)">Out</button></a>
   <br>
 
   Auto Focus:
@@ -256,8 +263,8 @@
     <input type="checkbox" id="AutoFocus" onclick="autoFocusHandler()">
     <div class="slider round"></div>
   </label>
-  <a href=# id=Focus><button type="button" class="momentaryBtn" name="Focus" value="Near">Near</button></a>
-  <a href=# id=Focus><button type="button" class="momentaryBtn" name="Focus" value="Far">Far</button></a>
+  <a href=# id=Focus><button type="button" class="momentaryBtn" name="Focus" value="Near" onclick="focusHandler(event)">Near</button></a>
+  <a href=# id=Focus><button type="button" class="momentaryBtn" name="Focus" value="Far" onclick="focusHandler(event)">Far</button></a>
   <br>
 
   Auto Iris:
@@ -265,9 +272,10 @@
     <input type="checkbox" id="AutoIris" onclick="autoIrisHandler()">
     <div class="slider round"></div>
   </label>
-  <a href=# id=Iris><button type="button" class="momentaryBtn" name="Iris" value="Open">Open</button></a>
-  <a href=# id=Iris><button type="button" class="momentaryBtn" name="Iris" value="Close">Close</button></a>
+  <a href=# id=Iris><button type="button" class="momentaryBtn" name="Iris" value="Open" onclick="irisHandler(event)">Open</button></a>
+  <a href=# id=Iris><button type="button" class="momentaryBtn" name="Iris" value="Close" onclick="irisHandler(event)">Close</button></a>
   <br>
+
 
   Auto AGC:
   <label class="switch">
