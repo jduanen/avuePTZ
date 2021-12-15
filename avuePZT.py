@@ -226,7 +226,7 @@ class AVUE(Pelco):
           Inputs:
             onOff: bool that turn the IR illuminator on if True and off if False
         """
-        logging.debug(f"IR: {onOff}")
+        logging.debug(f"irMode: {onOff}")
         self.preset("Call" if onOff else "Set", 62)
 
     def wiper(self):
@@ -363,20 +363,20 @@ def run(options):
 
     @app.route('/IR')
     def ir():
+        logging.debug(f"IR: {request.args.get('mode')}")
         cam.irMode(request.args.get('mode'))
-        logging.error(f"IR: {request.args.get('mode')}")
         return("nothing")
 
     @app.route('/AWB')
     def awb():
+        logging.debug(f"AWB: {request.args.get('mode')}")
         cam.AWB(request.args.get('mode'))
-        logging.error(f"AWB: {request.args.get('mode')}")
         return("nothing")
 
     @app.route('/BLC')
     def blc():
+        logging.debug(f"BLC: {request.args.get('mode')}")
         cam.BLC(request.args.get('mode'))
-        logging.error(f"BLC: {request.args.get('mode')}")
         return("nothing")
 
     app.run(host="0.0.0.0", port="8080")
