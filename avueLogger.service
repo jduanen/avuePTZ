@@ -5,7 +5,7 @@ After=network-online.target
 [Service]
 User=pi
 WorkingDirectory=/home/pi/Code/avuePZT
-ExecStart=/bin/bash -c 'cd /home/pi/Code/avuePZT && python3 ./avueLogger.py -w 0'
+ExecStart=/bin/bash -c 'cd /home/pi/Code/avuePZT && python3 ./avueLogger.py -D'
 StandardOutput=syslog
 Restart=always
 WatchdogSec=90s
