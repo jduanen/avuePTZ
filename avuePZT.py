@@ -366,7 +366,7 @@ def run(options):
         logging.debug(f"IR: {request.args.get('mode')}")
         if request.args.get('mode'):
            cam.irMode(True)
-        else
+        else:
             cam.irMode(False)
         return("nothing")
 
