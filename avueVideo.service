@@ -8,7 +8,6 @@ WorkingDirectory=/home/pi/Code/avuePZT
 ExecStart=/bin/bash -c 'cd /home/pi/Code/avuePZT && ./avueVideo.sh'
 StandardOutput=syslog
 Restart=always
-WatchdogSec=30s
 StartLimitInterval=5min
 StartLimitBurst=4
 StartLimitAction=none
