@@ -341,9 +341,29 @@ def run(options):
         logging.debug(f"AUTO_IRIS: {request.args.get('auto')}")
         return("nothing")
 
-    @app.route('/ir')
+    @app.route('/AGC')
+    def agc():
+        m = request.args.get('mode')
+        speed = 2  #### FIXME
+        if m == 'Stop':
+            logging.debug("AGC: Stop")
+            cam.stop()
+        else:
+            mode = m == "On"
+            logging.debug(f"AGC: {mode}")
+            cam.AGC(mode)
+        return("nothing")
+
+    @app.route('/autoGain')
+    def autoGain():
+        cam.AGC(request.args.get('auto'))
+        logging.debug(f"AGC: {request.args.get('auto')}")
+        return("nothing")
+
+    @app.route('/IR')
     def ir():
-        logging.error("IR Mode not implemented")
+        cam.irMode(request.args.get('mode'))
+        logging.error(f"IR: {request.args.get('mode')}")
         return("nothing")
 
     app.run(host="0.0.0.0", port="8080")
