@@ -410,11 +410,11 @@ class Pelco():
 
           Inputs:
             mode: bool that turns AGC on if True, off if False, and
-              sets it to AGC if None
+              sets it to Auto if None
         """
         self.extendedCommand('AGC', arg2=0 if mode is None else 1 if mode else 2)
 
-    def backlightComp(self, mode):
+    def BLC(self, mode):
         """Turn backlight compensation function on or off
 
           Inputs:
