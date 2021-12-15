@@ -1,6 +1,7 @@
 [Unit]
 Description=AVUE Camera Streaming
 After=network-online.target
+Wants=network-online.target
 
 [Service]
 User=pi

@@ -1,6 +1,7 @@
 [Unit]
 Description=AVUE PZT Controller with Web Server
 After=network-online.target
+Wants=network-online.target
 
 [Service]
 User=pi
