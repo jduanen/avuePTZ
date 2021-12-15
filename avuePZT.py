@@ -363,11 +363,9 @@ def run(options):
 
     @app.route('/IR')
     def ir():
-        logging.debug(f"IR: {request.args.get('mode')}")
-        if request.args.get('mode'):
-           cam.irMode(True)
-        else:
-            cam.irMode(False)
+        mode = request.args.get('mode')
+        logging.debug(f"IR: {mode}")
+        cam.irMode(mode)
         return("nothing")
 
     @app.route('/AWB')
