@@ -366,6 +366,18 @@ def run(options):
         logging.error(f"IR: {request.args.get('mode')}")
         return("nothing")
 
+    @app.route('/AWB')
+    def awb():
+        cam.AWB(request.args.get('mode'))
+        logging.error(f"AWB: {request.args.get('mode')}")
+        return("nothing")
+
+    @app.route('/BLC')
+    def blc():
+        cam.BLC(request.args.get('mode'))
+        logging.error(f"BLC: {request.args.get('mode')}")
+        return("nothing")
+
     app.run(host="0.0.0.0", port="8080")
     logging.debug("Exiting")
     return(0)
