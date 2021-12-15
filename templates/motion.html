@@ -151,14 +151,14 @@
     if (checkbox.checked == true) {
       console.log("Enable AGC");
       for (let i = 0; i < 2; i++) {
-        b[i].disable = true;
+        b[i].disabled = true;
         b[i].style.visibility = "hidden";
       }
       $.getJSON('/autoGain', {'auto': true});
     } else {
       console.log("Disable AGC");
       for (let i = 0; i < 2; i++) {
-        b[i].disable = false;
+        b[i].disabled = false;
         b[i].style.visibility = "visible";
       }
       $.getJSON('/autoGain', {'auto': false});
@@ -178,6 +178,18 @@
     var sw = document.getElementById("BLCSwitch");
     console.log("BLC mode: " + sw.checked);
     $.getJSON('/BLC', {'mode': sw.checked});
+  }
+  function wiperHandler() {
+    var btn = document.getElementById("Wiper");
+    if (btn.checked == true) {
+      btn.disabled = true;
+      setTimeout(function(){
+                  var b = document.getElementById("Wiper");
+                  b.disabled = false;
+                  b.checked = false;},
+                 5000);
+      $.getJSON('/wiper', function(data) {console.log(data);});
+    }
   }
 </script>
 
@@ -301,7 +313,10 @@
   </label>
   <br>
 
-  Wiper: <a href=# id=Wiper><button type="button" class="momentaryBtn">Cycle</button></a>
-  <br>
+  Wiper:
+  <label class="switch">
+    <input type="checkbox" id="Wiper" onclick="wiperHandler()">
+    <div class="slider round"></div>
+  </label>
 
 </section>
