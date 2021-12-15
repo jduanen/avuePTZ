@@ -11,6 +11,7 @@
 
 
 INTERVAL=15
+WATCHDOG=false
 
 function cleanup()
 {
@@ -25,9 +26,10 @@ ffmpeg -fflags +genpts+igndts -i /dev/video0 -c:v h264_omx -an -b:v 8M -f mpegts
 
 /bin/systemd-notify --pid $PID --ready
 while true; do
-	if ps -p $PID > /dev/null
-	then
-		/bin/systemd-notify --pid $PID WATCHDOG=1
+	if ps -p $PID > /dev/null; then
+		if $WATCHDOG; then
+			/bin/systemd-notify --pid $PID WATCHDOG=1
+		fi
 	else
 		echo "PID: " $PID " not running"
 		break
