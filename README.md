@@ -133,8 +133,6 @@ cvlc -vvv v4l2:///dev/video0:chroma=mp2v --v4l2-width 1280 --v4l2-height 720 --s
 ## TODO
 * make a tool to set the camera's baudrate
 * make a tool that allows CLI-based control of the camera
-* use systemd watchdogs to ensure applications are all running
+* enable systemd watchdogs to ensure applications are all running
 * figure out how to reduce latency of video streaming
-* make version of control web page that can work with touch screens
-* make wiper button automatically toggle off after N secs
 * create default startup state for controller
