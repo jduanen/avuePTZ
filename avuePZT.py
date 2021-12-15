@@ -267,7 +267,13 @@ def run(options):
 
     @app.route('/motion')
     def motion():
+        #### TODO initialize to proper state
         return render_template('./motion.html')
+
+    @app.route('/mobile')
+    def mobile():
+        #### TODO initialize to proper state
+        return render_template('./mobile.html')
 
     @app.route('/move')
     def move():
