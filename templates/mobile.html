@@ -3,7 +3,7 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
 <script type=text/javascript>
-  function motionHandler(e) {
+  function moveHandler(e) {
     var dir = e.target.name;
     var speed = e.target.value;
     console.log("MOVE: " + dir + " @ " + speed);
