@@ -63,7 +63,8 @@ class Watchdog():
 
     def __exit__(self, exc_type, exc_value, traceback):
         self.stop()
-        Watchdog.notification(Notification.STOPPING)
+        if self.timeout:
+            Watchdog.notification(Notification.STOPPING)
 
     def stop(self):
         if self.timer:
@@ -76,9 +77,10 @@ class Watchdog():
         self.timer.start()
 
     def handler(self):
-        Watchdog.notification(Notification.WATCHDOG)
-        if self.timer:
-            self.reset()
+        if self.timeout:
+            Watchdog.notification(Notification.WATCHDOG)
+            if self.timer:
+                self.reset()
 
 
 class AVUE(Pelco):
