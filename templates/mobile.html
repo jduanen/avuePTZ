@@ -3,29 +3,14 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
 <script type=text/javascript>
-  window.contextmenu = function(event) {
-    event.preventDefault();
-    event.stopPropagation();
-    return false;
-  }
-  $(function() {
-    $('a#Motion').on('mousedown', function(e) {
-      e.preventDefault();
-      $.getJSON('/move', {'direction': e.target.name, 'speed': e.target.value},
-        function(data) {console.log(data);});
-      return false;
-    });
-  });
-  $(function() {
-    $('a#Motion').on('mouseup', function(e) {
-      e.preventDefault();
-      $.getJSON('/move', {'direction': "Stop", 'speed': 0},
-        function(data) {console.log(data);});
-      return false;
-    });
-  });
-
-
+  function motionHandler(e) {
+    var dir = e.target.name;
+    var speed = e.target.value;
+    console.log("MOVE: " + dir + " @ " + speed);
+    $.getJSON('/move', {'direction': dir, 'speed': speed}, function(data) {console.log(data);});
+    setTimeout(function(){$.getJSON('/move', {'direction': "Stop", 'speed': 0}, function(data) {console.log(data);});},
+               500);
+  };
   function zoomHandler(e) {
     var dir = e.target.value;
     console.log("ZOOM: " + dir);
@@ -143,61 +128,61 @@
 
     <div class='movement'>
       <div class='move-buttons'>
-            <a href=# id=Motion><button type="button" class='btn' name='LeftUp' value=255>&#8662</button></a>
-            <a href=# id=Motion><button type="button" class='btn'></button></a>
-            <a href=# id=Motion><button type="button" class='btn'></button></a>
-            <a href=# id=Motion><button type="button" class='btn' name='Up' value=255>&#8657</button></a>
-            <a href=# id=Motion><button type="button" class='btn'></button></a>
-            <a href=# id=Motion><button type="button" class='btn'></button></a>
-            <a href=# id=Motion><button type="button" class='btn' name='RightUp' value=255>&#8663</button></a>
+            <a href=# id=Motion><button type="button" class='btn' name='LeftUp' value=255 onclick="moveHandler(event)">&#8662</button></a>
+            <a href=# id=Motion><button type="button" class='btn' onclick="moveHandler(event)"></button></a>
+            <a href=# id=Motion><button type="button" class='btn' onclick="moveHandler(event)"></button></a>
+            <a href=# id=Motion><button type="button" class='btn' name='Up' value=255 onclick="moveHandler(event)">&#8657</button></a>
+            <a href=# id=Motion><button type="button" class='btn' onclick="moveHandler(event)"></button></a>
+            <a href=# id=Motion><button type="button" class='btn' onclick="moveHandler(event)"></button></a>
+            <a href=# id=Motion><button type="button" class='btn' name='RightUp' value=255 onclick="moveHandler(event)">&#8663</button></a>
 
-            <a href=# id=Motion><button type="button" class='btn'></button></a>
-            <a href=# id=Motion><button type="button" class='btn' name='LeftUp' value=32>&#8598</button></a>
-            <a href=# id=Motion><button type="button" class='btn'></button></a>
-            <a href=# id=Motion><button type="button" class='btn' name='Up' value=32>&#8593</button></a>
-            <a href=# id=Motion><button type="button" class='btn'></button></a>
-            <a href=# id=Motion><button type="button" class='btn' name='RightUp' value=32>&#8599</button></a>
-            <a href=# id=Motion><button type="button" class='btn'></button></a>
+            <a href=# id=Motion><button type="button" class='btn' onclick="moveHandler(event)"></button></a>
+            <a href=# id=Motion><button type="button" class='btn' name='LeftUp' value=32 onclick="moveHandler(event)">&#8598</button></a>
+            <a href=# id=Motion><button type="button" class='btn' onclick="moveHandler(event)"></button></a>
+            <a href=# id=Motion><button type="button" class='btn' name='Up' value=32 onclick="moveHandler(event)">&#8593</button></a>
+            <a href=# id=Motion><button type="button" class='btn' onclick="moveHandler(event)"></button></a>
+            <a href=# id=Motion><button type="button" class='btn' name='RightUp' value=32 onclick="moveHandler(event)">&#8599</button></a>
+            <a href=# id=Motion><button type="button" class='btn' onclick="moveHandler(event)"></button></a>
 
-            <a href=# id=Motion><button type="button" class='btn'></button></a>
-            <a href=# id=Motion><button type="button" class='btn'></button></a>
-            <a href=# id=Motion><button type="button" class='btn' name='LeftUp' value=16>&#8598</button></a>
-            <a href=# id=Motion><button type="button" class='btn' name='Up' value=16>&#8673</button></a>
-            <a href=# id=Motion><button type="button" class='btn' name='RightUp' value=16>&#8599</button></a>
-            <a href=# id=Motion><button type="button" class='btn'></button></a>
-            <a href=# id=Motion><button type="button" class='btn'></button></a>
+            <a href=# id=Motion><button type="button" class='btn' onclick="moveHandler(event)"></button></a>
+            <a href=# id=Motion><button type="button" class='btn' onclick="moveHandler(event)"></button></a>
+            <a href=# id=Motion><button type="button" class='btn' name='LeftUp' value=16 onclick="moveHandler(event)">&#8598</button></a>
+            <a href=# id=Motion><button type="button" class='btn' name='Up' value=16 onclick="moveHandler(event)">&#8673</button></a>
+            <a href=# id=Motion><button type="button" class='btn' name='RightUp' value=16 onclick="moveHandler(event)">&#8599</button></a>
+            <a href=# id=Motion><button type="button" class='btn' onclick="moveHandler(event)"></button></a>
+            <a href=# id=Motion><button type="button" class='btn' onclick="moveHandler(event)"></button></a>
 
-            <a href=# id=Motion><button type="button" class='btn' name='Left' value=255>&#8656</button></a>
-            <a href=# id=Motion><button type="button" class='btn' name='Left' value=32>&#8592</button></a>
-            <a href=# id=Motion><button type="button" class='btn' name='Left' value=16>&#8672</button></a>
-            <a href=# id=Motion><button type="button" class='btn' name='Stop' value=0>X</button></a>
-            <a href=# id=Motion><button type="button" class='btn' name='Right' value=16>&#8674</button></a>
-            <a href=# id=Motion><button type="button" class='btn' name='Right' value=32>&#8594</button></a>
-            <a href=# id=Motion><button type="button" class='btn' name='Right' value=255>&#8658</button></a>
+            <a href=# id=Motion><button type="button" class='btn' name='Left' value=255 onclick="moveHandler(event)">&#8656</button></a>
+            <a href=# id=Motion><button type="button" class='btn' name='Left' value=32 onclick="moveHandler(event)">&#8592</button></a>
+            <a href=# id=Motion><button type="button" class='btn' name='Left' value=16 onclick="moveHandler(event)">&#8672</button></a>
+            <a href=# id=Motion><button type="button" class='btn' name='Stop' value=0 onclick="moveHandler(event)">X</button></a>
+            <a href=# id=Motion><button type="button" class='btn' name='Right' value=16 onclick="moveHandler(event)">&#8674</button></a>
+            <a href=# id=Motion><button type="button" class='btn' name='Right' value=32 onclick="moveHandler(event)">&#8594</button></a>
+            <a href=# id=Motion><button type="button" class='btn' name='Right' value=255 onclick="moveHandler(event)">&#8658</button></a>
 
-            <a href=# id=Motion><button type="button" class='btn'></button></a>
-            <a href=# id=Motion><button type="button" class='btn'></button></a>
-            <a href=# id=Motion><button type="button" class='btn' name='LeftDown' value=16>&#8601</button></a>
-            <a href=# id=Motion><button type="button" class='btn' name='Down' value=16>&#8675</button></a>
-            <a href=# id=Motion><button type="button" class='btn' name='RightDown' value=16>&#8600</button></a>
-            <a href=# id=Motion><button type="button" class='btn'></button></a>
-            <a href=# id=Motion><button type="button" class='btn'></button></a>
+            <a href=# id=Motion><button type="button" class='btn' onclick="moveHandler(event)"></button></a>
+            <a href=# id=Motion><button type="button" class='btn' onclick="moveHandler(event)"></button></a>
+            <a href=# id=Motion><button type="button" class='btn' name='LeftDown' value=16 onclick="moveHandler(event)">&#8601</button></a>
+            <a href=# id=Motion><button type="button" class='btn' name='Down' value=16 onclick="moveHandler(event)">&#8675</button></a>
+            <a href=# id=Motion><button type="button" class='btn' name='RightDown' value=16 onclick="moveHandler(event)">&#8600</button></a>
+            <a href=# id=Motion><button type="button" class='btn' onclick="moveHandler(event)"></button></a>
+            <a href=# id=Motion><button type="button" class='btn' onclick="moveHandler(event)"></button></a>
 
-            <a href=# id=Motion><button type="button" class='btn'></button></a>
-            <a href=# id=Motion><button type="button" class='btn' name='LeftDown' value=32>&#8601</button></a>
-            <a href=# id=Motion><button type="button" class='btn'></button></a>
-            <a href=# id=Motion><button type="button" class='btn' name='Down' value=32>&#8595</button></a>
-            <a href=# id=Motion><button type="button" class='btn'></button></a>
-            <a href=# id=Motion><button type="button" class='btn' name='RightDown' value=32>&#8600</button></a>
-            <a href=# id=Motion><button type="button" class='btn'></button></a>
+            <a href=# id=Motion><button type="button" class='btn' onclick="moveHandler(event)"></button></a>
+            <a href=# id=Motion><button type="button" class='btn' name='LeftDown' value=32 onclick="moveHandler(event)">&#8601</button></a>
+            <a href=# id=Motion><button type="button" class='btn' onclick="moveHandler(event)"></button></a>
+            <a href=# id=Motion><button type="button" class='btn' name='Down' value=32 onclick="moveHandler(event)">&#8595</button></a>
+            <a href=# id=Motion><button type="button" class='btn' onclick="moveHandler(event)"></button></a>
+            <a href=# id=Motion><button type="button" class='btn' name='RightDown' value=32 onclick="moveHandler(event)">&#8600</button></a>
+            <a href=# id=Motion><button type="button" class='btn' onclick="moveHandler(event)"></button></a>
 
-            <a href=# id=Motion><button type="button" class='btn' name='LeftDown' value=255>&#8665</button></a>
-            <a href=# id=Motion><button type="button" class='btn'></button></a>
-            <a href=# id=Motion><button type="button" class='btn'></button></a>
-            <a href=# id=Motion><button type="button" class='btn' name='Down' value=255>&#8659</button></a>
-            <a href=# id=Motion><button type="button" class='btn'></button></a>
-            <a href=# id=Motion><button type="button" class='btn'></button></a>
-            <a href=# id=Motion><button type="button" class='btn' name='RightDown' value=255>&#8664</button></a>
+            <a href=# id=Motion><button type="button" class='btn' name='LeftDown' value=255 onclick="moveHandler(event)">&#8665</button></a>
+            <a href=# id=Motion><button type="button" class='btn' onclick="moveHandler(event)"></button></a>
+            <a href=# id=Motion><button type="button" class='btn' onclick="moveHandler(event)"></button></a>
+            <a href=# id=Motion><button type="button" class='btn' name='Down' value=255 onclick="moveHandler(event)">&#8659</button></a>
+            <a href=# id=Motion><button type="button" class='btn' onclick="moveHandler(event)"></button></a>
+            <a href=# id=Motion><button type="button" class='btn' onclick="moveHandler(event)"></button></a>
+            <a href=# id=Motion><button type="button" class='btn' name='RightDown' value=255 onclick="moveHandler(event)">&#8664</button></a>
       </div>
     </div>
 </section>
