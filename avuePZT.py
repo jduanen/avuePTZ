@@ -17,7 +17,7 @@ import yaml
 from yaml import Loader
 
 from flask import (Flask, Blueprint, flash, g, redirect, render_template,
-                   request, session, url_for)
+                   request, session, url_for, send_from_directory)
 from systemd.daemon import notify, Notification
 from werkzeug.security import check_password_hash, generate_password_hash
 
@@ -256,6 +256,11 @@ def run(options):
         'RightUp': cam.rightUp,
         'RightDown': cam.rightDown
      }
+
+    @app.route('/favicon.ico')
+    def favicon():
+        return send_from_directory(os.path.join(app.root_path, 'static'),
+                                   'favicon.ico', mimetype='image/png')
 
     @app.route('/hello/<name>')
     def hello(name):
