@@ -5,8 +5,8 @@ Wants=network-online.target
 
 [Service]
 User=pi
-WorkingDirectory=/home/pi/Code/avuePZT
-ExecStart=/bin/bash -c 'cd /home/pi/Code/avuePZT && ./avueVideo.sh'
+WorkingDirectory=/home/pi/Code/avuePTZ
+ExecStart=/bin/bash -c 'cd /home/pi/Code/avuePTZ && ./avueVideo.sh'
 StandardOutput=syslog
 Restart=always
 StartLimitInterval=5min

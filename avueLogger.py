@@ -29,7 +29,7 @@ DEFAULTS = {
 }
 
 MQTT_TOPIC = "/sensors/avue"
-APPL_NAME = "AvuePZT"
+APPL_NAME = "AvuePTZ"
 APPL_VERSION = "1.1.0"
 DEV_TYPE = "Rpi3"
 

@@ -1,12 +1,12 @@
 [Unit]
-Description=AVUE PZT Controller with Web Server
+Description=AVUE PTZ Controller with Web Server
 After=network-online.target
 Wants=network-online.target
 
 [Service]
 User=pi
-WorkingDirectory=/home/pi/Code/avuePZT
-ExecStart=/bin/bash -c 'cd /home/pi/Code/avuePZT && python3 ./avuePZT.py -w 0'
+WorkingDirectory=/home/pi/Code/avuePTZ
+ExecStart=/bin/bash -c 'cd /home/pi/Code/avuePTZ && python3 ./avuePTZ.py -w 0'
 StandardOutput=syslog
 Restart=always
 StartLimitInterval=5min

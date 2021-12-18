@@ -1,5 +1,5 @@
 """
-Library for Pelco-D Protocol control of a PZT camera mount
+Library for Pelco-D Protocol control of a PTZ camera mount
 """
 
 import logging
