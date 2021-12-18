@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Application for controlling and viewing video from AVUE G50IR-WB36N PZT camera
+Application for controlling and viewing video from AVUE G50IR-WB36N PTZ camera
 """
 
 import argparse
