@@ -1,15 +1,15 @@
-# avuePZT
-Application for controlling and viewing video from an Avue G50IR-WB36N PZT camera
+# avuePTZ
+Application for controlling and viewing video from an Avue G50IR-WB36N PTZ (Pan/Tilt/Zoom) camera
 
-![Avue PZT Camera](AVUE_G50IR-WB36N.jpg)
+![Avue PTZ Camera](AVUE_G50IR-WB36N.jpg)
 
 [Avue Camera Information](docs/avue.md)
 
-[Pelco PZT Control Protocol Information](docs/pelco.md)
+[Pelco Control Protocol Information](docs/pelco.md)
 
 ## Controller
 
-The controller is responsible for streaming video from the camera to a remote display, and receiving commands to direct the PZT (pan/zoom/tilt) platform as well as the other camera functions (e.g., zoom in/out, focus near/far/auto, backlight compensation, contrast, IR-mode, wiper, etc.).
+The controller is responsible for streaming video from the camera to a remote display, and receiving commands to direct the PTZ (pan/tilt/zoom) platform as well as the other camera functions (e.g., zoom in/out, focus near/far/auto, backlight compensation, contrast, IR-mode, wiper, etc.).
 
 It is enclosed in a weatherproof (NEMA) box which connects to the Avue camera via its cable harnass and plugs into the 110VAC power.  Enclosed is the (24 VAC) power supply for the Avue camera and a (USB +5 VDC) power supply for the Raspberry Pi and its peripherals.
 
