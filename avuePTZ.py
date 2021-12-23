@@ -284,7 +284,6 @@ def run(options):
                               autoIris=cam.autoIrisMode, agc=cam.AGCmode,
                               awb=cam.AWBmode, blc=cam.BLCmode, ir=cam.IRmode,
                               wiper=cam.wiperMode)
-        print("MOTION:", cam.autoFocusMode, cam.autoIrisMode, cam.AGCmode, cam.AWBmode, cam.BLCmode, cam.IRmode, cam.wiperMode)
         return res
     @app.route('/mobile')
     def mobile():
@@ -292,8 +291,6 @@ def run(options):
                               autoIris=cam.autoIrisMode, agc=cam.AGCmode,
                               awb=cam.AWBmode, blc=cam.BLCmode, ir=cam.IRmode,
                               wiper=cam.wiperMode)
-        print("MOBILE:", cam.autoFocusMode, cam.autoIrisMode, cam.AGCmode, cam.AWBmode, cam.BLCmode, cam.IRmode, cam.wiperMode)
-        print(type(cam.autoFocusMode), type(cam.autoIrisMode), type(cam.AGCmode), type(cam.AWBmode), type(cam.BLCmode), type(cam.IRmode), type(cam.wiperMode))
         return res
 
     @app.route('/move')
