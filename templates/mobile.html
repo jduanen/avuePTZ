@@ -3,6 +3,13 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
 <script type=text/javascript>
+  var autoFocus = '{{ autoFocus }}' == 'True'
+  var autoIris = '{{ autoIris }}' == 'True'
+  var agc = '{{ agc }}' == 'True'
+  var awb = '{{ awb }}' == 'True'
+  var blc = '{{ blc }}' == 'True'
+  var ir = '{{ ir }}' == 'True'
+  var wiper = '{{ wiper }}' == 'True'
   function moveHandler(e) {
     var dir = e.target.name;
     var speed = e.target.value;
@@ -35,6 +42,7 @@
         b[i].style.visibility = "hidden";
       }
       $.getJSON('/autoFocus', {'auto': true});
+      autoFocus = true;
     } else {
       console.log("Disable AutoFocus");
       for (let i = 0; i < 2; i++) {
@@ -42,6 +50,7 @@
         b[i].style.visibility = "visible";
       }
       $.getJSON('/autoFocus', {'auto': false});
+      autoFocus = false;
     }
   };
   function irisHandler(e) {
@@ -121,8 +130,35 @@
       $.getJSON('/wiper', function(data) {console.log(data);});
     }
   };
+  function initButtons() {
+    console.log("Init Buttons");
+    var checkbox = document.getElementById('AutoFocus');
+    checkbox.checked = autoFocus;
+    autoFocusHandler();
+
+    checkbox = document.getElementById('AutoIris');
+    checkbox.checked = autoIris;
+    autoIrisHandler();
+
+    checkbox = document.getElementById('AutoGain');
+    checkbox.checked = agc;
+    autoGainHandler();
+
+    var sw = document.getElementById("AWBSwitch");
+    sw.checked = awb;
+
+    sw = document.getElementById("BLCSwitch");
+    sw.checked = blc;
+
+    sw = document.getElementById("IRSwitch");
+    sw.checked = ir;
+
+    var btn = document.getElementById("Wiper");
+    btn.checked = wiper;
+  }
 </script>
 
+<body onload=initButtons()>
 <section class="content">
   <h3>Move</h3>
 
@@ -248,5 +284,5 @@
     <input type="checkbox" id="Wiper" onclick="wiperHandler()">
     <div class="slider round"></div>
   </label>
-
 </section>
+</body>
