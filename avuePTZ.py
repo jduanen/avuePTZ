@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Application for controlling and viewing video from AVUE G50IR-WB36N PZT camera
+Application for controlling and viewing video from AVUE G50IR-WB36N PTZ camera
 """
 
 import argparse
@@ -84,12 +84,15 @@ class Watchdog():
 
 
 class AVUE(Pelco):
-    """Specialization of Pelco-D protocol for the AVUE G50IR-WB36N PZT camera
+    """Specialization of Pelco-D protocol for the AVUE G50IR-WB36N PTZ camera
     """
     def __init__(self, address, port, baudrate):
         """????
         """
         super().__init__(address, port, baudrate)
+
+        self.IRmode = False
+        self.wiperMode = False
 
         #### TODO consider removing extended commands
 
@@ -229,11 +232,14 @@ class AVUE(Pelco):
             onOff: bool that turn the IR illuminator on if True and off if False
         """
         logging.debug(f"irMode: {onOff}")
+        self.IRmode = onOff
         self.preset("Call" if onOff else "Set", 62)
 
     def wiper(self):
         """Run the camera's wiper for five cycles
         """
+        #### FIXME set a timer to turn this off after 30 secs
+        ##self.wiper = True
         self.preset("Call", 63)
 
 
@@ -274,13 +280,21 @@ def run(options):
 
     @app.route('/motion')
     def motion():
-        #### TODO initialize to proper state
-        return render_template('./motion.html')
-
+        res = render_template('./motion.html', autoFocus=cam.autoFocusMode,
+                              autoIris=cam.autoIrisMode, agc=cam.AGCmode,
+                              awb=cam.AWBmode, blc=cam.BLCmode, ir=cam.IRmode,
+                              wiper=cam.wiperMode)
+        print("MOTION:", cam.autoFocusMode, cam.autoIrisMode, cam.AGCmode, cam.AWBmode, cam.BLCmode, cam.IRmode, cam.wiperMode)
+        return res
     @app.route('/mobile')
     def mobile():
-        #### TODO initialize to proper state
-        return render_template('./mobile.html')
+        res = render_template('./mobile.html', autoFocus=cam.autoFocusMode,
+                              autoIris=cam.autoIrisMode, agc=cam.AGCmode,
+                              awb=cam.AWBmode, blc=cam.BLCmode, ir=cam.IRmode,
+                              wiper=cam.wiperMode)
+        print("MOBILE:", cam.autoFocusMode, cam.autoIrisMode, cam.AGCmode, cam.AWBmode, cam.BLCmode, cam.IRmode, cam.wiperMode)
+        print(type(cam.autoFocusMode), type(cam.autoIrisMode), type(cam.AGCmode), type(cam.AWBmode), type(cam.BLCmode), type(cam.IRmode), type(cam.wiperMode))
+        return res
 
     @app.route('/move')
     def move():
@@ -332,8 +346,9 @@ def run(options):
 
     @app.route('/autoFocus')
     def autoFocus():
-        cam.autoFocus(request.args.get('auto'))
-        logging.debug(f"AUTO_FOCUS: {request.args.get('auto')}")
+        auto = False if request.args.get('auto') == 'false' else True
+        cam.autoFocus(auto)
+        logging.debug(f"AUTO_FOCUS: {auto}, {type(auto)}")
         return("nothing")
 
     @app.route('/iris')
@@ -351,8 +366,9 @@ def run(options):
 
     @app.route('/autoIris')
     def autoIris():
-        cam.autoIris(request.args.get('auto'))
-        logging.debug(f"AUTO_IRIS: {request.args.get('auto')}")
+        auto = False if request.args.get('auto') == 'false' else True
+        cam.autoIris(auto)
+        logging.debug(f"AUTO_IRIS: {auto}")
         return("nothing")
 
     @app.route('/AGC')
@@ -370,28 +386,28 @@ def run(options):
 
     @app.route('/autoGain')
     def autoGain():
-        auto = request.args.get('auto') == 'true'
+        auto = False if request.args.get('auto') == 'false' else True
         cam.AGC(auto)
         logging.debug(f"AGC: {auto}")
         return("nothing")
 
     @app.route('/IR')
     def ir():
-        mode = request.args.get('mode') == 'true'
+        mode = False if request.args.get('mode') == 'false' else True
         logging.debug(f"IR: {mode}")
         cam.irMode(mode)
         return("nothing")
 
     @app.route('/AWB')
     def awb():
-        mode = request.args.get('mode') == 'true'
+        mode = False if request.args.get('mode') == 'false' else True
         logging.debug(f"AWB: {mode}")
         cam.AWB(mode)
         return("nothing")
 
     @app.route('/BLC')
     def blc():
-        mode = request.args.get('mode') == 'true'
+        mode = False if request.args.get('mode') == 'false' else True
         logging.debug(f"BLC: {mode}")
         cam.BLC(mode)
         return("nothing")
