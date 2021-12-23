@@ -116,6 +116,7 @@ class Pelco():
         self.open = True
         logging.debug(f"Opened {port} at {baudrate}")
 
+        self.resetCameraDefaults()
         self.cameraOn()
         self.stop()
 
@@ -184,6 +185,7 @@ class Pelco():
 
           Returns: list of bool alarm indications
         """
+        self.camOn = True
         return self._sendStandardCommand(self._makeCommands1_2(cameraEnable=True))
 
     def cameraOff(self):
@@ -191,6 +193,7 @@ class Pelco():
 
           Returns: list of bool alarm indications
         """
+        self.camOn = False
         return self._sendStandardCommand(self._makeCommands1_2(cameraEnable=False))
 
     def motion(self, pan, tilt, panSpeed=None, tiltSpeed=None):
@@ -232,6 +235,7 @@ class Pelco():
 
           Returns: list of bool alarm indications
         """
+        self.autoFocusMode = False
         if speed:
             self.setFocusSpeed(speed)
             self.focusSpeed = speed
@@ -246,6 +250,7 @@ class Pelco():
 
           Returns: list of bool alarm indications
         """
+        self.autoIrisMode = False
         return self._sendStandardCommand(self._makeCommands1_2(iris=irisDir))
 
     def _sendExtendedCommand(self, word3, word4, word5, word6):
@@ -385,6 +390,12 @@ class Pelco():
     def resetCameraDefaults(self):
         """Reset the camera to its default values
         """
+        self.camOn = False
+        self.autoFocusMode = True
+        self.autoIrisMode = True
+        self.AGCmode = True
+        self.AWBmode = True
+        self.BLCmode = True
         self.extendedCommand('ResetCamera')
 
     def autoFocus(self, mode):
@@ -394,6 +405,8 @@ class Pelco():
             mode: bool that turns auto-focus on if True, off if False, and
               sets it to auto mode if None
         """
+        print(f"AF: {mode}, {type(mode)}")
+        self.autoFocusMode = True if mode is None else mode
         self.extendedCommand('AutoFocus', arg2=0 if mode is None else 1 if mode else 2)
 
     def autoIris(self, mode):
@@ -403,6 +416,7 @@ class Pelco():
             mode: bool that turns auto-iris on if True, off if False, and
               sets it to auto mode if None
         """
+        self.autoIrisMode = True if mode is None else mode
         self.extendedCommand('AutoIris', arg2=0 if mode is None else 1 if mode else 2)
 
     def AGC(self, mode):
@@ -412,6 +426,7 @@ class Pelco():
             mode: bool that turns AGC on if True, off if False, and
               sets it to Auto if None
         """
+        self.AGCmode = mode
         self.extendedCommand('AGC', arg2=0 if mode is None else 1 if mode else 2)
 
     def BLC(self, mode):
@@ -420,6 +435,7 @@ class Pelco():
           Inputs:
             mode: bool that turns backlight compensation on if True and off if False
         """
+        self.BLCmode = mode
         self.extendedCommand('BLC', arg2=1 if mode else 0)
 
     def AWB(self, mode):
@@ -428,6 +444,7 @@ class Pelco():
           Inputs:
             mode: bool that turns auto white balance on if True and off if False
         """
+        self.AWBmode = mode
         self.extendedCommand('AWB', arg2=1 if mode else 0)
 
     def query(self):
