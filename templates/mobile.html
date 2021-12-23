@@ -70,6 +70,7 @@
         b[i].style.visibility = "hidden";
       }
       $.getJSON('/autoIris', {'auto': true});
+      autoIris = true;
     } else {
       console.log("Disable AutoIris");
       for (let i = 0; i < 2; i++) {
@@ -77,6 +78,7 @@
         b[i].style.visibility = "visible";
       }
       $.getJSON('/autoIris', {'auto': false});
+      autoIris = false;
     }
   };
   function agcHandler(e) {
@@ -94,6 +96,7 @@
         b[i].style.visibility = "hidden";
       }
       $.getJSON('/autoGain', {'auto': true});
+      agc = true;
     } else {
       console.log("Disable AGC");
       for (let i = 0; i < 2; i++) {
@@ -101,22 +104,26 @@
         b[i].style.visibility = "visible";
       }
       $.getJSON('/autoGain', {'auto': false});
+      agc = false;
     }
   };
   function irHandler() {
     var sw = document.getElementById("IRSwitch");
     console.log("IR mode: " + sw.checked);
     $.getJSON('/IR', {'mode': sw.checked});
+    ir = sw.checked;
   };
   function awbHandler() {
     var sw = document.getElementById("AWBSwitch");
     console.log("AWB mode: " + sw.checked);
     $.getJSON('/AWB', {'mode': sw.checked});
+    awb = sw.checked;
   };
   function blcHandler() {
     var sw = document.getElementById("BLCSwitch");
     console.log("BLC mode: " + sw.checked);
     $.getJSON('/BLC', {'mode': sw.checked});
+    blc = sw.checked;
   };
   function wiperHandler() {
     var btn = document.getElementById("Wiper");
@@ -125,9 +132,11 @@
       setTimeout(function(){
                   var b = document.getElementById("Wiper");
                   b.disabled = false;
-                  b.checked = false;},
+                  b.checked = false;
+                  wiper = false;},
                  30000);
       $.getJSON('/wiper', function(data) {console.log(data);});
+      wiper = true;
     }
   };
   function initButtons() {
