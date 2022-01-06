@@ -22,7 +22,7 @@ function cleanup()
 
 trap cleanup EXIT
 
-ffmpeg tmix=frames=7:weights="1 1 1 1 1 1 1" -fflags +genpts+igndts -i /dev/video0 -c:v h264_omx -an -b:v 8M -f mpegts - | cvlc -I dummy - --sout='#std{access=http,mux=ts,dst=:8554,acodec=none}' & PID=$!
+ffmpeg -fflags +genpts+igndts -i /dev/video0 -c:v h264_omx -an -b:v 8M -f mpegts tmix=frames=7:weights="1 1 1 1 1 1 1" - | cvlc -I dummy - --sout='#std{access=http,mux=ts,dst=:8554,acodec=none}' & PID=$!
 
 /bin/systemd-notify --pid $PID --ready
 while true; do
