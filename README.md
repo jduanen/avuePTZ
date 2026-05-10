@@ -17,7 +17,8 @@ It is enclosed in a weatherproof (NEMA) box which connects to the Avue camera vi
 
 ### Hardware
 
-The control unit consists of a Raspberry Pi 3B+ with three USB dongles -- one to digitize the video, another to send (Pelco) commands to the camera via RS485, and a WiFi with external antenna.
+The control unit consists of a (2GB) Raspberry Pi 4B with two USB dongles -- one to digitize the video, and another to send (Pelco) commands to the camera via RS485.
+I modified the Raspberry Pi to add a U.FL connector so that I can use an external antenna.
 
 #### NTSC Video Digitizer USB Dongle
 * Fushicai USBTV007 Video Grabber (EasyCAP)
@@ -33,43 +34,85 @@ The control unit consists of a Raspberry Pi 3B+ with three USB dongles -- one to
   - sudo cp ./99-dtech-rs422_485.rules /etc/udev/rules.d/
   - sudo udevadm control --reload-rules
   - sudo udevadm trigger
+* check dongle
+   - 'v4l2-ctl -d /dev/video0 --list-formats-ext'
+      * YUYV 4:2:2
 
 ![RS485 Converter](images/FTD_RS485.png)
 
-#### WiFi Dongle
-* Ralink Technology, Corp. RT5370 Wireless Adapter
-  - ID 148f:5370
-* disable on-board WiFi
-  - use this as it has an external antenna
-
-![WiFi Dongle](images/RT5370.png)
-
 ### Software
 
-The Raspi uses it's internal H264 encoder to compress the video from the digitizer and streams it over the WiFi connection.  A good WiFi signal is required to ensure good quality video.
+The Raspi uses it's internal H264 encoder to compress the video from the digitizer and streams it over the WiFi connection. A good WiFi signal (better than ??dBm) is required to ensure good quality video.
 
-The temperature and WiFi signal quality are continuously monitored and logged via my [SensorNet](https://github.com/jduanen/SensorNet) project.
+Packages to be installed after a fresh install of Raspi OS Lite (Trixie) on the uSD card include:
+* git
+  - 'sudo apt install git'
+* ffmepg
+  - 'sudo apt install ffmpeg'
+* gstreamer (including v4l2src, v4l2h264enc, rtph264pay, and udpsink)
+  - 'sudo apt install -y gstreamer1.0-tools \
+    gstreamer1.0-plugins-base \
+    gstreamer1.0-plugins-good \
+    gstreamer1.0-plugins-bad \
+    gstreamer1.0-plugins-ugly \
+    gstreamer1.0-libav \
+    libgstreamer-plugins-bad1.0-dev'
+  - check install
+    * 'gst-inspect-1.0 v4l2h264enc'
+    * 'gst-inspect-1.0 udpsink'
+  - test basic video input
+    * 'gst-launch-1.0 v4l2src device=/dev/video0 num-buffers=100 ! videoconvert ! autovideosink'
+  - check HW encoding 
+    * 'gst-inspect-1.0 | grep h264enc'
+      - should report v4l2h264enc (HW encode) and x264enc (SW encode)
+  - install streaming support
+    * 'sudo apt install libx264-dev libjpeg-dev gstreamer1.0-pulseaudio'
+  - test video pipeline
+    * 'gst-launch-1.0 v4l2src device=/dev/video0 ! \
+      video/x-raw,width=720,height=480,framerate=30/1 ! \
+      v4l2h264enc bitrate=2000000 ! \
+      h264parse ! \
+      udpsink host=<RECEIVER_IPA> port=5000 sync=false'
+    --> FIXME doesn't work
 
-#### Temperature
-* command-line tool to read system temperature
-  - vcgencmd measure_temp
-
-#### RSSI
-* command-line tool to get the WiFi signal strength
-  - iwlist wlan0 scan | egrep dBm
+Code from this repo is installed as well as the tools from my [linuxTools](https://github.com/jduanen/linuxTools) project for measuring the CPU temperature and WiFi signal quality (i.e., ? and rssi.sh respectively). These metrics are transmitted as MQTT messages by the mqttd service [?], and are continuously monitored by my [SensorNet](https://github.com/jduanen/SensorNet) project.
 
 #### Web-Server
 * Flask-based python app
 * Using the ???? web server
 
 #### Streaming Video
-* server
-  - ffmpeg -fflags +genpts+igndts -i /dev/video0 -c:v h264_omx -an -b:v 12M -f mpegts - | cvlc -I dummy - --sout='#std{access=http,mux=ts,dst=:8554}'
 
-* client
-  - vlc http://avue:8554
+* Video Capture USB Dongle
+  - get all info: 'v4l2-ctl --all'
+  - list devices: 'v4l2-ctl --list-devices'
+  - test capture: 'v4l2-ctl -d /dev/video0 --set-fmt-video=width=720,height=480,pixelformat=MJPG
+ffplay /dev/video0'
+
+* GStreamer
+  - server
+    * 'gst-launch-1.0 v4l2src device=/dev/video0 ! \
+      video/x-raw,width=720,height=480,framerate=30/1 ! \
+      v4l2h264enc extra-controls="controls,video_bitrate=2000000" ! \
+      h264parse ! rtph264pay config-interval=1 pt=96 ! \
+      udpsink host=$RECEIVER_IPA port=5000 sync=false'
+  - client
+    * 'gst-launch-1.0 udpsrc port=5000 ! \
+      application/x-rtp,payload=96,encoding-name=H264 ! \
+      rtpH264depay ! h264parse ! avdec_h264 ! \
+      autovideosink sync=false'
+
+* FFMPG & VLC
+  - server
+    * ffmpeg -fflags +genpts+igndts -i /dev/video0 -c:v h264_omx -an -b:v 12M -f mpegts - | cvlc -I dummy - --sout='#std{access=http,mux=ts,dst=:8554}'
+  - client
+    * vlc http://avue:8554
 
 ===================================================================================
+**TODO**
+
+* figure out lowest latency method of transmitting the video
+
 sudo apt install x264
 cvlc -vvv v4l2:///dev/video0 --sout '#transcode{vcodec=h264,vb=800,acodec=none}:rtp{sdp=rtsp://:8554/}'
 
