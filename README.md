@@ -102,16 +102,24 @@ ffplay /dev/video0'
       rtpH264depay ! h264parse ! avdec_h264 ! \
       autovideosink sync=false'
 
-* FFMPG & VLC
+* FFMPG & VLC (superseded — see Browser Streaming below)
   - server
     * ffmpeg -fflags +genpts+igndts -i /dev/video0 -c:v h264_omx -an -b:v 12M -f mpegts - | cvlc -I dummy - --sout='#std{access=http,mux=ts,dst=:8554}'
   - client
     * vlc http://avue:8554
 
+* Browser Streaming (current approach)
+  - The Flask app (`avuePTZ.py`) serves live MJPEG directly at `/video_feed`
+  - FFmpeg deinterlaces (yadif) the 480i NTSC source and encodes JPEG frames in software; the Pi 4 handles 480p at ~25 fps without hardware acceleration
+  - The `/camera` endpoint serves an integrated page with live video and all PTZ controls
+  - `avueVideo.service` is permanently disabled (conflicts with the Flask-managed capture)
+  - To access: navigate to `http://avue:8080/camera` in any browser (no VLC or plugins required)
+  - Latency: ~200–400 ms, suitable for interactive pan/tilt/zoom control
+
 ===================================================================================
 **TODO**
 
-* figure out lowest latency method of transmitting the video
+* ~~figure out lowest latency method of transmitting the video~~ (resolved: MJPEG via Flask)
 
 sudo apt install x264
 cvlc -vvv v4l2:///dev/video0 --sout '#transcode{vcodec=h264,vb=800,acodec=none}:rtp{sdp=rtsp://:8554/}'
@@ -177,5 +185,5 @@ cvlc -vvv v4l2:///dev/video0:chroma=mp2v --v4l2-width 1280 --v4l2-height 720 --s
 * make a tool to set the camera's baudrate
 * make a tool that allows CLI-based control of the camera
 * enable systemd watchdogs to ensure applications are all running
-* figure out how to reduce latency of video streaming
+* ~~figure out how to reduce latency of video streaming~~ (resolved: MJPEG over HTTP in Flask)
 * create default startup state for controller

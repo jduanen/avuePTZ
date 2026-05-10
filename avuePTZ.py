@@ -10,13 +10,14 @@ import json
 import logging
 import os
 import signal
+import subprocess
 import sys
 import threading
 import time
 import yaml
 from yaml import Loader
 
-from flask import (Flask, Blueprint, flash, g, redirect, render_template,
+from flask import (Flask, Blueprint, Response, flash, g, redirect, render_template,
                    request, session, url_for, send_from_directory)
 from systemd.daemon import notify, Notification
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -408,6 +409,47 @@ def run(options):
         logging.debug(f"BLC: {mode}")
         cam.BLC(mode)
         return("nothing")
+
+    @app.route('/video_feed')
+    def video_feed():
+        def generate():
+            cmd = [
+                'ffmpeg',
+                '-fflags', '+nobuffer', '-flags', '+low_delay',
+                '-probesize', '32', '-analyzeduration', '0',
+                '-i', '/dev/video0',
+                '-vf', 'yadif',
+                '-f', 'image2pipe',
+                '-vcodec', 'mjpeg',
+                '-q:v', '5',
+                'pipe:1'
+            ]
+            proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+            buf = b''
+            try:
+                while True:
+                    chunk = proc.stdout.read(8192)
+                    if not chunk:
+                        break
+                    buf += chunk
+                    start = buf.find(b'\xff\xd8')
+                    end = buf.find(b'\xff\xd9', start + 2) if start != -1 else -1
+                    if start != -1 and end != -1:
+                        frame = buf[start:end + 2]
+                        buf = buf[end + 2:]
+                        yield (b'--frame\r\nContent-Type: image/jpeg\r\n\r\n'
+                               + frame + b'\r\n')
+            finally:
+                proc.terminate()
+                proc.wait()
+        return Response(generate(),
+                        mimetype='multipart/x-mixed-replace; boundary=frame',
+                        headers={'Cache-Control': 'no-cache'})
+
+    @app.route('/camera')
+    def camera():
+        return render_template('./camera.html', autoFocus=cam.autoFocusMode,
+                               ir=cam.IRmode, wiper=cam.wiperMode)
 
     app.run(host="0.0.0.0", port="8080")
     logging.debug("Exiting")
