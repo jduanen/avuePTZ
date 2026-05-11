@@ -1,0 +1,193 @@
+<!doctype html>
+<title>AVUE Camera</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #111; color: #eee; font-family: sans-serif; user-select: none; }
+
+  #video-wrap { width: 100%; background: #000; }
+  #stream { display: block; width: 100%; height: auto; }
+
+  #controls { display: flex; flex-wrap: wrap; gap: 12px; padding: 10px; justify-content: center; }
+
+  /* D-pad */
+  .dpad { display: grid; grid-template-columns: repeat(3, 52px); grid-template-rows: repeat(3, 52px); gap: 4px; }
+  .dpad button { width: 52px; height: 52px; font-size: 1.5rem; background: #333; color: #eee;
+                 border: 1px solid #555; border-radius: 6px; cursor: pointer; touch-action: none; }
+  .dpad button:active { background: #555; }
+  .dpad .stop { background: #222; font-size: 1rem; color: #aaa; }
+
+  /* Side controls */
+  .side { display: flex; flex-direction: column; gap: 8px; min-width: 140px; }
+  .ctrl-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .ctrl-row label { font-size: 0.8rem; color: #aaa; min-width: 42px; }
+
+  button.cb { height: 36px; min-width: 48px; background: #333; color: #eee;
+              border: 1px solid #555; border-radius: 5px; cursor: pointer; font-size: 0.9rem; touch-action: none; }
+  button.cb:active { background: #555; }
+  button.cb:disabled { opacity: 0.4; cursor: default; }
+  button.cb.active { background: #2a6; border-color: #2a6; }
+
+  /* Speed slider */
+  #speed { width: 100px; accent-color: #4af; }
+
+  /* Toggle switch */
+  .sw-wrap { display: flex; align-items: center; gap: 6px; }
+  .sw { position: relative; width: 52px; height: 26px; }
+  .sw input { display: none; }
+  .sw .track { position: absolute; inset: 0; border-radius: 13px; background: #b22; cursor: pointer; transition: background .3s; }
+  .sw input:checked + .track { background: #2a6; }
+  .sw .track::after { content: ''; position: absolute; width: 20px; height: 20px; border-radius: 50%;
+                      background: #fff; top: 3px; left: 3px; transition: transform .3s; }
+  .sw input:checked + .track::after { transform: translateX(26px); }
+  .sw-label { font-size: 0.85rem; }
+</style>
+
+<body>
+<div id="video-wrap">
+  <img id="stream" src="/video_feed" alt="Camera stream">
+</div>
+
+<div id="controls">
+  <!-- D-pad -->
+  <div class="dpad">
+    <button data-dir="LeftUp">&#8598;</button>
+    <button data-dir="Up">&#8593;</button>
+    <button data-dir="RightUp">&#8599;</button>
+    <button data-dir="Left">&#8592;</button>
+    <button class="stop" data-stop>&#9632;</button>
+    <button data-dir="Right">&#8594;</button>
+    <button data-dir="LeftDown">&#8601;</button>
+    <button data-dir="Down">&#8595;</button>
+    <button data-dir="RightDown">&#8600;</button>
+  </div>
+
+  <!-- Camera controls -->
+  <div class="side">
+    <div class="ctrl-row">
+      <label>Speed</label>
+      <input id="speed" type="range" min="16" max="255" value="128">
+    </div>
+    <div class="ctrl-row">
+      <label>Zoom</label>
+      <button class="cb" data-zoom="In">+</button>
+      <button class="cb" data-zoom="Out">&#x2212;</button>
+    </div>
+    <div class="ctrl-row">
+      <label>Focus</label>
+      <button class="cb" id="focusNear" data-focus="Near">Near</button>
+      <button class="cb" id="focusFar" data-focus="Far">Far</button>
+      <button class="cb" id="afBtn" onclick="toggleAF()">AF</button>
+    </div>
+    <div class="ctrl-row">
+      <label>IR</label>
+      <div class="sw-wrap">
+        <label class="sw">
+          <input type="checkbox" id="irSwitch" onchange="toggleIR()">
+          <div class="track"></div>
+        </label>
+        <span class="sw-label" id="irLabel">OFF</span>
+      </div>
+    </div>
+    <div class="ctrl-row">
+      <label>Wiper</label>
+      <button class="cb" id="wiperBtn" onclick="runWiper()">Run</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // --- State init from server ---
+  var afOn = '{{ autoFocus }}' === 'True';
+  var irOn = '{{ ir }}' === 'True';
+
+  // --- Utility ---
+  function cmd(path, params) {
+    var url = path + '?' + new URLSearchParams(params).toString();
+    fetch(url, {keepalive: true}).catch(function(){});
+  }
+
+  // --- Movement ---
+  var speed = function() { return parseInt(document.getElementById('speed').value); };
+
+  function startMove(dir) { cmd('/move', {direction: dir, speed: speed()}); }
+  function stopMove()     { cmd('/move', {direction: 'Stop', speed: 0}); }
+
+  document.querySelectorAll('[data-dir]').forEach(function(btn) {
+    var dir = btn.dataset.dir;
+    btn.addEventListener('mousedown',   function(e) { e.preventDefault(); startMove(dir); });
+    btn.addEventListener('touchstart',  function(e) { e.preventDefault(); startMove(dir); }, {passive: false});
+    btn.addEventListener('mouseup',     stopMove);
+    btn.addEventListener('mouseleave',  stopMove);
+    btn.addEventListener('touchend',    stopMove);
+    btn.addEventListener('touchcancel', stopMove);
+    btn.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+  });
+
+  document.querySelectorAll('[data-stop]').forEach(function(btn) {
+    btn.addEventListener('mousedown',  function(e) { e.preventDefault(); stopMove(); });
+    btn.addEventListener('touchstart', function(e) { e.preventDefault(); stopMove(); }, {passive: false});
+    btn.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+  });
+
+  // --- Zoom ---
+  document.querySelectorAll('[data-zoom]').forEach(function(btn) {
+    var dir = btn.dataset.zoom;
+    btn.addEventListener('mousedown',   function(e) { e.preventDefault(); cmd('/zoom', {direction: dir}); });
+    btn.addEventListener('touchstart',  function(e) { e.preventDefault(); cmd('/zoom', {direction: dir}); }, {passive: false});
+    btn.addEventListener('mouseup',     function() { cmd('/zoom', {direction: 'Stop'}); });
+    btn.addEventListener('mouseleave',  function() { cmd('/zoom', {direction: 'Stop'}); });
+    btn.addEventListener('touchend',    function() { cmd('/zoom', {direction: 'Stop'}); });
+    btn.addEventListener('touchcancel', function() { cmd('/zoom', {direction: 'Stop'}); });
+    btn.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+  });
+
+  // --- Focus ---
+  document.querySelectorAll('[data-focus]').forEach(function(btn) {
+    var dir = btn.dataset.focus;
+    btn.addEventListener('mousedown',   function(e) { e.preventDefault(); cmd('/focus', {direction: dir}); });
+    btn.addEventListener('touchstart',  function(e) { e.preventDefault(); cmd('/focus', {direction: dir}); }, {passive: false});
+    btn.addEventListener('mouseup',     function() { cmd('/focus', {direction: 'Stop'}); });
+    btn.addEventListener('mouseleave',  function() { cmd('/focus', {direction: 'Stop'}); });
+    btn.addEventListener('touchend',    function() { cmd('/focus', {direction: 'Stop'}); });
+    btn.addEventListener('touchcancel', function() { cmd('/focus', {direction: 'Stop'}); });
+    btn.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+  });
+
+  function toggleAF() {
+    afOn = !afOn;
+    cmd('/autoFocus', {auto: afOn});
+    document.getElementById('afBtn').classList.toggle('active', afOn);
+    document.getElementById('focusNear').disabled = afOn;
+    document.getElementById('focusFar').disabled  = afOn;
+  }
+
+  // --- IR ---
+  function toggleIR() {
+    irOn = document.getElementById('irSwitch').checked;
+    cmd('/IR', {mode: irOn});
+    document.getElementById('irLabel').textContent = irOn ? 'ON' : 'OFF';
+  }
+
+  // --- Wiper ---
+  function runWiper() {
+    var btn = document.getElementById('wiperBtn');
+    btn.disabled = true;
+    cmd('/wiper', {});
+    setTimeout(function() { btn.disabled = false; }, 30000);
+  }
+
+  // --- Init button states ---
+  (function() {
+    if (afOn) {
+      document.getElementById('afBtn').classList.add('active');
+      document.getElementById('focusNear').disabled = true;
+      document.getElementById('focusFar').disabled  = true;
+    }
+    if (irOn) {
+      document.getElementById('irSwitch').checked = true;
+      document.getElementById('irLabel').textContent = 'ON';
+    }
+  })();
+</script>
+</body>
