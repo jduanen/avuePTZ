@@ -4,4 +4,6 @@
 # create a venv that can see these packages
 * `python3 -m venv --system-site-packages venv`
 * `source venv/bin/activate`
+
+# install remaining packages
 * `pip install flask pyyaml`
