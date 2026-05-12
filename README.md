@@ -27,7 +27,7 @@ The Pi has been modified with a U.FL connector for an external WiFi antenna.
 #### NTSC Video Digitizer USB Dongle
 * Fushicai USBTV007 Video Grabber (EasyCAP)
   - ID 1b71:3002
-  - Captures 720x480 YUYV 4:2:2, interlaced (NTSC 480i), at `/dev/video0`
+  - Captures 720x480 YUYV 4:2:2, interlaced (NTSC 480i), at `/dev/video1`
 
 ![Video Digitizer](images/USBTV007.png)
 
@@ -42,7 +42,7 @@ The Pi has been modified with a U.FL connector for an external WiFi antenna.
   ```
 * Verify video device:
   ```
-  v4l2-ctl -d /dev/video0 --list-formats-ext
+  v4l2-ctl -d /dev/video1 --list-formats-ext
   ```
 
 ![RS485 Converter](images/FTD_RS485.png)

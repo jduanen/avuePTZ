@@ -437,7 +437,7 @@ def run(options):
             'ffmpeg',
             '-fflags', '+nobuffer', '-flags', '+low_delay',
             '-probesize', '32', '-analyzeduration', '0',
-            '-i', '/dev/video0',
+            '-i', '/dev/video1',
             '-vf', 'yadif',
             '-f', 'image2pipe',
             '-vcodec', 'mjpeg',
