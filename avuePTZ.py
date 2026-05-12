@@ -445,9 +445,19 @@ def run(options):
             'pipe:1'
         ]
         while True:
+            logging.info("capture_loop: starting FFmpeg")
             try:
-                proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+                proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+                # Drain stderr in background so it never blocks FFmpeg
+                stderr_lines = []
+                def _drain(pipe=proc.stderr):
+                    for raw in pipe:
+                        stderr_lines.append(raw.decode(errors='replace').rstrip())
+                threading.Thread(target=_drain, daemon=True).start()
+
                 buf = b''
+                frames = 0
                 while True:
                     chunk = proc.stdout.read(8192)
                     if not chunk:
@@ -459,9 +469,16 @@ def run(options):
                         with frame_lock:
                             frame_holder[0] = buf[start:end + 2]
                         buf = buf[end + 2:]
+                        frames += 1
+                        if frames == 1:
+                            logging.info("capture_loop: first frame captured")
+
                 proc.wait()
-            except Exception:
-                pass
+                for line in stderr_lines[-10:]:
+                    logging.error("FFmpeg: %s", line)
+                logging.warning("capture_loop: FFmpeg exited after %d frames", frames)
+            except Exception as ex:
+                logging.error("capture_loop: %s", ex)
             time.sleep(1)
 
     threading.Thread(target=capture_loop, daemon=True).start()
