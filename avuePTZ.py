@@ -160,9 +160,20 @@ class AVUE(Pelco):
     #### TODO override other methods
 
     def home(self):
-        """Move camera back to home position -- i.e., 0 deg azimuth and 0 deg elevation
+        """Move camera to home: pan to zero and tilt to horizontal.
+
+          Tilt homes by driving to the upper mechanical stop then backing down
+          ~90 degrees. Timing constants will need calibration.
         """
-        #### FIXME figure out a good way to home the elevation
+        # drive tilt to upper stop (8 sec at HIGH covers full 180 deg range)
+        self.motion(None, True, Speed.HIGH, Speed.HIGH)
+        time.sleep(8)
+        self.stop()
+        # back down ~90 deg to horizontal at NORMAL speed (~18.4 deg/sec)
+        self.motion(None, False, Speed.NORMAL, Speed.NORMAL)
+        time.sleep(5)
+        self.stop()
+        # pan to zero
         self.extendedCommand('GotoZeroPan')
 
     def pan(self, direction, degrees, speed=Speed.NORMAL):
@@ -417,7 +428,7 @@ def run(options):
 
     @app.route('/home')
     def home():
-        cam.home()
+        threading.Thread(target=cam.home, daemon=True).start()
         return("nothing")
 
     @app.route('/zoomWide')
