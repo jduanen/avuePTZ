@@ -61,6 +61,7 @@
     <button data-dir="Down">&#8595;</button>
     <button data-dir="RightDown">&#8600;</button>
   </div>
+  <button class="cb" style="margin-top:6px;width:100%;" onclick="cmd('/home',{})">&#8962; Home</button>
 
   <!-- Camera controls -->
   <div class="side">
@@ -72,6 +73,7 @@
       <label>Zoom</label>
       <button class="cb" data-zoom="In">+</button>
       <button class="cb" data-zoom="Out">&#x2212;</button>
+      <button class="cb" onclick="cmd('/zoomWide',{})">Wide</button>
     </div>
     <div class="ctrl-row">
       <label>Focus</label>

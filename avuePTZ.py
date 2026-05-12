@@ -415,6 +415,20 @@ def run(options):
         cam.BLC(mode)
         return("nothing")
 
+    @app.route('/home')
+    def home():
+        cam.home()
+        return("nothing")
+
+    @app.route('/zoomWide')
+    def zoomWide():
+        def do_zoom():
+            cam.zoom(False, 2)
+            time.sleep(5)
+            cam.stop()
+        threading.Thread(target=do_zoom, daemon=True).start()
+        return("nothing")
+
     @app.route('/video_feed')
     def video_feed():
         def generate():
