@@ -37,7 +37,8 @@ DEFAULTS = {
     'address': 1,
     'port': "/dev/ttyUSB0",  ##"/dev/ttyAMA0",
     'baudrate': 4800,
-    'watchdog': 15  # watchdog interval in usecs (15 secs)
+    'watchdog': 15,  # watchdog interval in usecs (15 secs)
+    'index': 0       # "/dev/video0"
 }
 
 BAUD_RATES = (4800, 9600)
@@ -437,7 +438,7 @@ def run(options):
             'ffmpeg',
             '-fflags', '+nobuffer', '-flags', '+low_delay',
             '-probesize', '32', '-analyzeduration', '0',
-            '-i', '/dev/video1',
+            '-i', f"/dev/video{options.index}",
             '-vf', 'yadif',
             '-f', 'image2pipe',
             '-vcodec', 'mjpeg',
@@ -503,7 +504,7 @@ def run(options):
 
 def getOpts():
     usage = f"Usage: {sys.argv[0]} [-v] [-L <logLevel>] [-l <logFile>] " + \
-      "[-a <address>] [-b <baudrate>] [-p <port>] [-w <watchdog>]"
+      "[-a <address>] [-b <baudrate>] [-p <port>] [-w <watchdog>] [-i <videoIndex>]"
     ap = argparse.ArgumentParser()
     ap.add_argument(
         "-L", "--logLevel", action="store", type=str,
@@ -529,6 +530,9 @@ def getOpts():
     ap.add_argument(
         "-w", "--watchdog", action="store", type=int, default=DEFAULTS['watchdog'],
         help="secs between watchdog notifications to systemd (0 means no watchdog)")
+    ap.add_argument(
+        "-i", "--index", action="store", type=int, defaults=DEFAULTS['index'],
+        help="Numerical index of video capture device (postpended to '/dev/video')")
     opts = ap.parse_args()
 
     if opts.logFile:
@@ -559,6 +563,7 @@ def getOpts():
             print(f"    Watchdog Interval:  {opts.watchdog} secs")
         else:
             print("    Watchdog not enabled")
+        print(f"    Video Capture:   /dev/video{opts.index}")
     return opts
 
 
