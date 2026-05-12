@@ -28,13 +28,13 @@ The Pi has been modified with a U.FL connector for an external WiFi antenna.
 
 * USB ID: 1b71:3002
 * Captures 720x480 YUYV 4:2:2, interlaced (NTSC 480i)
-* Device node: **`/dev/video1`**
+* Device node: **`/dev/video0`**
   - The Pi 4's bcm2835 codec and ISP kernel drivers claim `/dev/video10`–`/dev/video23`,
-    pushing the USB grabber to `/dev/video1`. Do not assume `/dev/video0`.
+    sometimes pushing the USB grabber to `/dev/video1`. Do not assume `/dev/video0`.
 * Verify after boot:
   ```bash
-  v4l2-ctl --list-devices          # confirms usbtv on /dev/video1
-  v4l2-ctl -d /dev/video1 --list-formats-ext
+  v4l2-ctl --list-devices          # confirms usbtv on /dev/video0
+  v4l2-ctl -d /dev/video0 --list-formats-ext
   ```
 
 ![Video Digitizer](images/USBTV007.png)
@@ -59,7 +59,7 @@ The Pi has been modified with a U.FL connector for an external WiFi antenna.
 
 `avuePTZ.py` is a Flask application that handles both video and PTZ control:
 
-* **Video**: A background thread runs FFmpeg continuously, capturing from `/dev/video1`,
+* **Video**: A background thread runs FFmpeg continuously, capturing from `/dev/video0`,
   deinterlacing the 480i NTSC source with `yadif`, and encoding JPEG frames in software.
   The latest frame is stored in a shared memory buffer. The `/snapshot` endpoint returns
   the current frame as `image/jpeg`. The browser polls `/snapshot` in a tight loop and
@@ -122,7 +122,7 @@ sudo systemctl status avueControl avueLogger
 | `avueControl` | Flask PTZ controller + video capture (port 8080) |
 | `avueLogger` | MQTT telemetry (CPU temp, WiFi RSSI) to SensorNet |
 
-`avueVideo.service` is **permanently disabled**. The Flask app owns `/dev/video1` directly
+`avueVideo.service` is **permanently disabled**. The Flask app owns `/dev/video0` directly
 via its background capture thread. Do not re-enable `avueVideo.service`.
 
 ### Web Interface
@@ -165,7 +165,7 @@ CPU temperature and WiFi RSSI are also published via MQTT to the
 ### Troubleshooting
 
 **No video / black canvas:**
-1. Check the video device exists: `ls /dev/video*` — should include `/dev/video1`
+1. Check the video device exists: `ls /dev/video*` — should include `/dev/video0`
 2. Check the usbtv kernel module: `lsmod | grep usbtv` — load with `sudo modprobe usbtv` if missing
 3. Check Flask log for `FFmpeg:` error lines — the capture loop logs FFmpeg stderr on failure
 4. Verify the USB dongle is recognized: `lsusb | grep 1b71`
