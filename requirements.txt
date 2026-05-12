@@ -1,6 +1,5 @@
 flask
 functools
-itertools
 json
 os
 pyyaml
