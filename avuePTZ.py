@@ -33,7 +33,7 @@ from Pelco import *
 #### FIXME add web server port to defaults
 
 DEFAULTS = {
-    'logLevel': "INFO",  #"DEBUG"  #"WARNING"
+    'logLevel': "WARNING",
     'address': 1,
     'port': "/dev/ttyUSB0",  ##"/dev/ttyAMA0",
     'baudrate': 4800,
