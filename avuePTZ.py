@@ -19,7 +19,12 @@ from yaml import Loader
 
 from flask import (Flask, Blueprint, Response, flash, g, redirect, render_template,
                    request, session, url_for, send_from_directory)
-from systemd.daemon import notify, Notification
+from systemd.daemon import notify
+
+class Notification:
+    READY    = "READY=1"
+    STOPPING = "STOPPING=1"
+    WATCHDOG = "WATCHDOG=1"
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from Pelco import *
