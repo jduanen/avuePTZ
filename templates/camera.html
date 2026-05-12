@@ -55,13 +55,12 @@
     <button data-dir="Up">&#8593;</button>
     <button data-dir="RightUp">&#8599;</button>
     <button data-dir="Left">&#8592;</button>
-    <button class="stop" data-stop>&#9632;</button>
+    <button class="cb" onclick="cmd('/home',{})">&#8962;</button>
     <button data-dir="Right">&#8594;</button>
     <button data-dir="LeftDown">&#8601;</button>
     <button data-dir="Down">&#8595;</button>
     <button data-dir="RightDown">&#8600;</button>
   </div>
-  <button class="cb" style="margin-top:6px;width:100%;" onclick="cmd('/home',{})">&#8962; Home</button>
 
   <!-- Camera controls -->
   <div class="side">
@@ -123,12 +122,6 @@
     btn.addEventListener('mouseleave',  stopMove);
     btn.addEventListener('touchend',    stopMove);
     btn.addEventListener('touchcancel', stopMove);
-    btn.addEventListener('contextmenu', function(e) { e.preventDefault(); });
-  });
-
-  document.querySelectorAll('[data-stop]').forEach(function(btn) {
-    btn.addEventListener('mousedown',  function(e) { e.preventDefault(); stopMove(); });
-    btn.addEventListener('touchstart', function(e) { e.preventDefault(); stopMove(); }, {passive: false});
     btn.addEventListener('contextmenu', function(e) { e.preventDefault(); });
   });
 
