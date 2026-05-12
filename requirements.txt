@@ -1,11 +1,7 @@
 flask
 functools
-json
-os
 pyyaml
-signal
 subprocess
-sys
 systemd
 threading
 time
