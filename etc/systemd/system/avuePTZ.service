@@ -1,0 +1,16 @@
+[Unit]
+Description=Application for controlling and view video from Sony AVUE PTZ camera
+After=network.target network-online.target
+
+[Service]
+Type=simple
+User=jdn
+Group=jdn
+WorkingDirectory=/home/jdn/Code/avuePTZ
+ExecStart=/home/jdn/Code/avuePTZ/venv/bin/python /home/jdn/Code/avuePTZ/avuePTZ.py
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+WantedBy=rpiTelemetry.target
