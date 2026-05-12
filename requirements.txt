@@ -1,10 +1,12 @@
 flask
 functools
-paho-mqtt
-parse
-pyserial
+itertools
+json
+os
 pyyaml
-socket
+signal
 subprocess
+sys
 systemd
-vcgencmd
+threading
+time
