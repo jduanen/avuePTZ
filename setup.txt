@@ -1,0 +1,7 @@
+# install packages that can't be pip-installed on Trixie
+* `sudo apt install python3-systemd python3-serial`
+
+# create a venv that can see these packages
+* `python3 -m venv --system-site-packages venv`
+* `source venv/bin/activate`
+* `pip install flask pyyaml`
