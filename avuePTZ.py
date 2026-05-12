@@ -171,7 +171,7 @@ class AVUE(Pelco):
         self.stop()
         # back down ~90 deg to horizontal at NORMAL speed (~18.4 deg/sec)
         self.motion(None, False, Speed.NORMAL, Speed.NORMAL)
-        time.sleep(5)
+        time.sleep(5.5)
         self.stop()
         # pan to zero
         self.extendedCommand('GotoZeroPan')
