@@ -443,26 +443,18 @@ def run(options):
                 'pipe:1'
             ]
             proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
-            buf = b''
             try:
                 while True:
                     chunk = proc.stdout.read(8192)
                     if not chunk:
                         break
-                    buf += chunk
-                    start = buf.find(b'\xff\xd8')
-                    end = buf.find(b'\xff\xd9', start + 2) if start != -1 else -1
-                    if start != -1 and end != -1:
-                        frame = buf[start:end + 2]
-                        buf = buf[end + 2:]
-                        yield (b'--frame\r\nContent-Type: image/jpeg\r\n\r\n'
-                               + frame + b'\r\n')
+                    yield chunk
             finally:
                 proc.terminate()
                 proc.wait()
         return Response(generate(),
-                        mimetype='multipart/x-mixed-replace; boundary=frame',
-                        headers={'Cache-Control': 'no-cache'})
+                        mimetype='application/octet-stream',
+                        headers={'Cache-Control': 'no-cache', 'X-Accel-Buffering': 'no'})
 
     @app.route('/camera')
     def camera():
