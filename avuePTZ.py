@@ -531,7 +531,7 @@ def getOpts():
         "-w", "--watchdog", action="store", type=int, default=DEFAULTS['watchdog'],
         help="secs between watchdog notifications to systemd (0 means no watchdog)")
     ap.add_argument(
-        "-i", "--index", action="store", type=int, defaults=DEFAULTS['index'],
+        "-i", "--index", action="store", type=int, default=DEFAULTS['index'],
         help="Numerical index of video capture device (postpended to '/dev/video')")
     opts = ap.parse_args()
 
