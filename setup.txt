@@ -6,4 +6,4 @@
 * `source venv/bin/activate`
 
 # install remaining packages
-* `pip install flask pyyaml`
+* `pip install -r requirements.txt`
