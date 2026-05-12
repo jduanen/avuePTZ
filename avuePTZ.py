@@ -428,33 +428,52 @@ def run(options):
         threading.Thread(target=do_zoom, daemon=True).start()
         return("nothing")
 
-    @app.route('/video_feed')
-    def video_feed():
-        def generate():
-            cmd = [
-                'ffmpeg',
-                '-fflags', '+nobuffer', '-flags', '+low_delay',
-                '-probesize', '32', '-analyzeduration', '0',
-                '-i', '/dev/video0',
-                '-vf', 'yadif',
-                '-f', 'image2pipe',
-                '-vcodec', 'mjpeg',
-                '-q:v', '5',
-                'pipe:1'
-            ]
-            proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+    # Shared frame buffer — background thread keeps this current
+    frame_holder = [None]
+    frame_lock = threading.Lock()
+
+    def capture_loop():
+        cmd = [
+            'ffmpeg',
+            '-fflags', '+nobuffer', '-flags', '+low_delay',
+            '-probesize', '32', '-analyzeduration', '0',
+            '-i', '/dev/video0',
+            '-vf', 'yadif',
+            '-f', 'image2pipe',
+            '-vcodec', 'mjpeg',
+            '-q:v', '5',
+            'pipe:1'
+        ]
+        while True:
             try:
+                proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+                buf = b''
                 while True:
                     chunk = proc.stdout.read(8192)
                     if not chunk:
                         break
-                    yield chunk
-            finally:
-                proc.terminate()
+                    buf += chunk
+                    start = buf.find(b'\xff\xd8')
+                    end = buf.find(b'\xff\xd9', start + 2) if start != -1 else -1
+                    if start != -1 and end != -1:
+                        with frame_lock:
+                            frame_holder[0] = buf[start:end + 2]
+                        buf = buf[end + 2:]
                 proc.wait()
-        return Response(generate(),
-                        mimetype='application/octet-stream',
-                        headers={'Cache-Control': 'no-cache', 'X-Accel-Buffering': 'no'})
+            except Exception:
+                pass
+            time.sleep(1)
+
+    threading.Thread(target=capture_loop, daemon=True).start()
+
+    @app.route('/snapshot')
+    def snapshot():
+        with frame_lock:
+            frame = frame_holder[0]
+        if frame is None:
+            return '', 503
+        return Response(frame, mimetype='image/jpeg',
+                        headers={'Cache-Control': 'no-cache, no-store'})
 
     @app.route('/camera')
     def camera():

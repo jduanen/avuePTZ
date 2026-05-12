@@ -176,59 +176,27 @@
   (function() {
     var canvas = document.getElementById('stream');
     var ctx = canvas.getContext('2d');
-    var busy = false;
 
-    function findJpeg(buf) {
-      var start = -1;
-      for (var i = 0; i < buf.length - 1; i++) {
-        if (buf[i] === 0xFF && buf[i+1] === 0xD8) { start = i; break; }
-      }
-      if (start < 0) return null;
-      for (var j = start + 2; j < buf.length - 1; j++) {
-        if (buf[j] === 0xFF && buf[j+1] === 0xD9) return [start, j + 2];
-      }
-      return null;
-    }
-
-    function renderFrame(bytes) {
-      if (busy) return;
-      busy = true;
-      createImageBitmap(new Blob([bytes], {type: 'image/jpeg'})).then(function(bmp) {
-        if (canvas.width !== bmp.width || canvas.height !== bmp.height) {
-          canvas.width = bmp.width;
-          canvas.height = bmp.height;
-        }
-        ctx.drawImage(bmp, 0, 0);
-        bmp.close();
-        busy = false;
-      }).catch(function() { busy = false; });
-    }
-
-    async function streamLoop() {
-      while (true) {
-        try {
-          var reader = (await fetch('/video_feed')).body.getReader();
-          var chunks = [], bufLen = 0;
-          while (true) {
-            var result = await reader.read();
-            if (result.done) break;
-            chunks.push(result.value);
-            bufLen += result.value.length;
-            var buf = new Uint8Array(bufLen), off = 0;
-            for (var c of chunks) { buf.set(c, off); off += c.length; }
-            var found = findJpeg(buf);
-            if (!found) { chunks = [buf]; continue; }
-            renderFrame(buf.subarray(found[0], found[1]));
-            var rem = buf.slice(found[1]);
-            chunks = rem.length ? [rem] : [];
-            bufLen = rem.length;
+    function nextFrame() {
+      fetch('/snapshot', {cache: 'no-store'})
+        .then(function(r) {
+          if (!r.ok) throw r.status;
+          return r.blob();
+        })
+        .then(function(blob) { return createImageBitmap(blob); })
+        .then(function(bmp) {
+          if (canvas.width !== bmp.width || canvas.height !== bmp.height) {
+            canvas.width = bmp.width;
+            canvas.height = bmp.height;
           }
-        } catch(e) {}
-        await new Promise(function(r) { setTimeout(r, 2000); });
-      }
+          ctx.drawImage(bmp, 0, 0);
+          bmp.close();
+          setTimeout(nextFrame, 0);
+        })
+        .catch(function() { setTimeout(nextFrame, 1000); });
     }
 
-    streamLoop();
+    nextFrame();
   })();
 
   // --- Init button states ---
