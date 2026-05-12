@@ -1,7 +1,3 @@
 flask
-functools
 pyyaml
-subprocess
 systemd
-threading
-time
