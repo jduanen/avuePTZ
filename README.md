@@ -69,7 +69,7 @@ GStreamer and VLC are no longer required.
 cd /home/pi/avuePTZ
 python3 -m venv --system-site-packages venv
 source venv/bin/activate
-pip install flask pyyaml
+pip install -r requirements.txt
 ```
 
 `--system-site-packages` allows the venv to use the apt-installed `systemd` and `serial` modules.
