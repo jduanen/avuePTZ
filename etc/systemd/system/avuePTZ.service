@@ -7,7 +7,7 @@ Type=simple
 User=jdn
 Group=jdn
 WorkingDirectory=/home/jdn/Code/avuePTZ
-ExecStart=/home/jdn/Code/avuePTZ/venv/bin/python /home/jdn/Code/avuePTZ/avuePTZ.py -i 0
+ExecStart=/home/jdn/Code/avuePTZ/venv/bin/python /home/jdn/Code/avuePTZ/avuePTZ.py -L WARNING -i 0
 Restart=always
 RestartSec=10
 
