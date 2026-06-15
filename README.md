@@ -5,9 +5,9 @@ Application for controlling and viewing video from an Avue G50IR-WB36N PTZ (Pan/
 
 Pictures of the Avue PTZ Camera internals: [Camera Pod](images/PXL_20260207_193859642.jpg), [Pan & Tilt Steppers](images/PXL_20260207_193907250.jpg), [IR Illuminator Pod](images/PXL_20260207_194239122.jpg)
 
-[Avue Camera Information](docs/avue.md)
+Features and Specifications: [Avue Camera Information](docs/avue.md)
 
-[Pelco Control Protocol Information](docs/pelco.md)
+Pelco Control Protocol Information: [Pelco-D Protocol](docs/pelco.md)
 
 ## Controller
 
