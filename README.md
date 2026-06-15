@@ -28,13 +28,15 @@ The Pi has been modified with a U.FL connector for an external WiFi antenna.
 
 * USB ID: 1b71:3002
 * Captures 720x480 YUYV 4:2:2, interlaced (NTSC 480i)
-* Device node: **`/dev/video0`**
-  - The Pi 4's bcm2835 codec and ISP kernel drivers claim `/dev/video10`–`/dev/video23`,
-    sometimes pushing the USB grabber to `/dev/video1`. Do not assume `/dev/video0`.
+* Device node: typically **`/dev/video0`**, but can shift to `/dev/video1`
+  - The Pi 4's bcm2835 codec and ISP kernel drivers claim `/dev/video10`–`/dev/video23`.
+    Depending on which modules are loaded at boot, the USB grabber may land at `/dev/video0`
+    or `/dev/video1`. Verify after every kernel or driver change.
+  - Pass `-i <index>` to `avuePTZ.py` to select the correct device; update the service
+    `ExecStart` line if it changes.
 * Verify after boot:
   ```bash
-  v4l2-ctl --list-devices          # confirms usbtv on /dev/video0
-  v4l2-ctl -d /dev/video0 --list-formats-ext
+  v4l2-ctl --list-devices          # find the usbtv entry and note its /dev/videoN path
   ```
 
 ![Video Digitizer](images/USBTV007.png)
@@ -59,7 +61,8 @@ The Pi has been modified with a U.FL connector for an external WiFi antenna.
 
 `avuePTZ.py` is a Flask application that handles both video and PTZ control:
 
-* **Video**: A background thread runs FFmpeg continuously, capturing from `/dev/video0`,
+* **Video**: A background thread runs FFmpeg continuously, capturing from the configured
+  video device (default `/dev/video0`, selected via `-i` flag),
   deinterlacing the 480i NTSC source with `yadif`, and encoding JPEG frames in software.
   The latest frame is stored in a shared memory buffer. The `/snapshot` endpoint returns
   the current frame as `image/jpeg`. The browser polls `/snapshot` in a tight loop and
@@ -95,7 +98,7 @@ versions; the apt package is used instead, with a local shim defined in `avuePTZ
 cd ~/Code/avuePTZ
 python3 -m venv --system-site-packages venv
 source venv/bin/activate
-pip install -r requirements.txt      # flask, pyserial, pyyaml
+pip install -r requirements.txt      # flask, parse, pyyaml
 ```
 
 `--system-site-packages` lets the venv see the apt-installed `systemd` and `serial` modules.
@@ -107,23 +110,22 @@ sudo cp ./99-dtech-rs422_485.rules /etc/udev/rules.d/
 sudo udevadm control --reload-rules && sudo udevadm trigger
 ```
 
-#### 4. Systemd services
+#### 4. Systemd service
 
 ```bash
-sudo cp avueControl.service avueLogger.service /lib/systemd/system/
+sudo cp etc/systemd/system/avuePTZ.service /etc/systemd/system/
 sudo systemctl daemon-reload
-sudo systemctl enable avueControl avueLogger
-sudo systemctl start avueControl avueLogger
-sudo systemctl status avueControl avueLogger
+sudo systemctl enable avuePTZ
+sudo systemctl start avuePTZ
+sudo systemctl status avuePTZ
 ```
 
-| Service | Description |
-|---|---|
-| `avueControl` | Flask PTZ controller + video capture (port 8080) |
-| `avueLogger` | MQTT telemetry (CPU temp, WiFi RSSI) to SensorNet |
+The service runs as user `jdn` and uses the venv at `/home/jdn/Code/avuePTZ/venv`.
+The `-i` flag in `ExecStart` selects the video device index; verify with
+`v4l2-ctl --list-devices` and update if it differs from the current setting.
 
-`avueVideo.service` is **permanently disabled**. The Flask app owns `/dev/video0` directly
-via its background capture thread. Do not re-enable `avueVideo.service`.
+`avueVideo.service` and `avueLogger.service` are **permanently deprecated** (see `DEPRECATED/`).
+The Flask app owns `/dev/video1` directly via its background capture thread.
 
 ### Web Interface
 
@@ -140,7 +142,7 @@ Works on desktop (Brave, Firefox, Chrome) and mobile (Chrome on Android).
 | Speed slider | Pan/tilt speed 0–63 |
 | Zoom +/− | Hold to zoom in/out |
 | Zoom Wide | Zooms out for 5 s (reaches full wide from any position) |
-| Focus Near/Far | Hold to adjust; AF toggle hides manual buttons |
+| Focus Near/Far | Hold to adjust; AF toggle disables manual buttons |
 | IR | Toggle IR illuminator and ICR filter |
 | Wiper | Triggers one wiper cycle; button locks for 30 s |
 
@@ -165,7 +167,7 @@ CPU temperature and WiFi RSSI are also published via MQTT to the
 ### Troubleshooting
 
 **No video / black canvas:**
-1. Check the video device exists: `ls /dev/video*` — should include `/dev/video0`
+1. Confirm the video device index: `v4l2-ctl --list-devices` — find the usbtv entry
 2. Check the usbtv kernel module: `lsmod | grep usbtv` — load with `sudo modprobe usbtv` if missing
 3. Check Flask log for `FFmpeg:` error lines — the capture loop logs FFmpeg stderr on failure
 4. Verify the USB dongle is recognized: `lsusb | grep 1b71`
