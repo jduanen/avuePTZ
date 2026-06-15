@@ -3,10 +3,7 @@ Application for controlling and viewing video from an Avue G50IR-WB36N PTZ (Pan/
 
 ![Avue PTZ Camera](AVUE_G50IR-WB36N.jpg)
 
-Pictures of the Avue PTZ Camera internals:
-[Camera Pod](images/PXL_20260207_193859642.jpg)
-[Pan & Tilt Steppers](images/PXL_20260207_193907250.jpg)
-[IR Illuminator Pod](images/PXL_20260207_194239122.jpg)
+Pictures of the Avue PTZ Camera internals: [Camera Pod](images/PXL_20260207_193859642.jpg), [Pan & Tilt Steppers](images/PXL_20260207_193907250.jpg), [IR Illuminator Pod](images/PXL_20260207_194239122.jpg)
 
 [Avue Camera Information](docs/avue.md)
 
