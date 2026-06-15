@@ -148,6 +148,71 @@ Works on desktop (Brave, Firefox, Chrome) and mobile (Chrome on Android).
 
 Additional legacy pages: `/motion` (desktop, no video), `/mobile` (mobile, no video).
 
+### REST API
+
+All endpoints are under `/api/`. State reads use `GET`, mode changes use `PUT` with a
+JSON body, and actions use `POST` with a JSON body. All responses are JSON.
+
+The Pelco-D protocol is write-only — there is no way to query the camera directly.
+Reads return the locally-tracked state that was last written.
+
+**State snapshot**
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/state` | All tracked state as a single JSON object |
+
+Example response:
+```json
+{
+  "camOn": true, "autoFocus": true, "autoIris": true,
+  "AGC": true, "AWB": true, "BLC": true, "IR": false, "wiper": false,
+  "panSpeed": 32, "tiltSpeed": 32, "zoomSpeed": 2, "focusSpeed": 2
+}
+```
+
+**Readable/writable modes** — `GET` returns `{"enabled": bool}`, `PUT` accepts `{"enabled": bool}`
+
+| Endpoint | Controls |
+|----------|----------|
+| `/api/ir` | IR illuminator + ICR filter |
+| `/api/autofocus` | Auto-focus on/off |
+| `/api/autoiris` | Auto-iris on/off |
+| `/api/agc` | Automatic gain control on/off |
+| `/api/awb` | Auto white balance on/off |
+| `/api/blc` | Backlight compensation on/off |
+
+**Actions** — `POST` with JSON body, returns `{"ok": true}`
+
+| Endpoint | Body | Description |
+|----------|------|-------------|
+| `/api/move` | `{"direction": "Up\|Down\|Left\|Right\|LeftUp\|LeftDown\|RightUp\|RightDown\|Stop", "speed": 0-63}` | Pan/tilt; Stop halts all motion |
+| `/api/zoom` | `{"direction": "In\|Out\|Stop"}` | Zoom |
+| `/api/zoomwide` | _(none)_ | Zoom full-wide over 5 s then stop |
+| `/api/focus` | `{"direction": "Near\|Far\|Stop"}` | Manual focus |
+| `/api/iris` | `{"direction": "Open\|Close\|Stop"}` | Manual iris |
+| `/api/home` | _(none)_ | `GotoZeroPan` — return to home position |
+| `/api/wiper` | _(none)_ | Run one wiper cycle |
+| `/api/preset` | `{"command": "Set\|Clear\|Call", "id": 0-255}` | Pelco-D preset |
+
+Examples:
+```bash
+# Read all state
+curl http://avue.lan:8080/api/state
+
+# Enable IR
+curl -X PUT http://avue.lan:8080/api/ir -H 'Content-Type: application/json' -d '{"enabled": true}'
+
+# Pan right at speed 32
+curl -X POST http://avue.lan:8080/api/move -H 'Content-Type: application/json' -d '{"direction": "Right", "speed": 32}'
+
+# Stop movement
+curl -X POST http://avue.lan:8080/api/move -H 'Content-Type: application/json' -d '{"direction": "Stop"}'
+
+# Call preset 1
+curl -X POST http://avue.lan:8080/api/preset -H 'Content-Type: application/json' -d '{"command": "Call", "id": 1}'
+```
+
 ### Monitoring
 
 ```bash
