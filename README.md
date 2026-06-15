@@ -249,6 +249,5 @@ CPU temperature and WiFi RSSI are also published via MQTT to the
 
 ## TODO
 * Make a tool to set the camera's baudrate
-* Make a tool for CLI-based camera control
 * Enable systemd watchdog integration in `avueControl.service`
 * Create a defined startup state for the camera (position, zoom, focus, IR)
