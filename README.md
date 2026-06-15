@@ -3,6 +3,15 @@ Application for controlling and viewing video from an Avue G50IR-WB36N PTZ (Pan/
 
 ![Avue PTZ Camera](AVUE_G50IR-WB36N.jpg)
 
+Pictures of the Avue PTZ Camera internals:
+[?1](images/PXL_20260129_205837227.jpg)
+[?2](images/PXL_20260207_193859642.jpg)
+[?3](images/PXL_20260207_193907250.jpg)
+[?4](images/PXL_20260207_194239122.jpg)
+[?5](images/PXL_20260207_194243147.jpg)
+[?6](images/PXL_20260207_194252784.jpg)
+[?7](images/PXL_20260207_194301253.jpg)
+
 [Avue Camera Information](docs/avue.md)
 
 [Pelco Control Protocol Information](docs/pelco.md)
