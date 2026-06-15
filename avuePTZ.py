@@ -17,7 +17,7 @@ import time
 import yaml
 from yaml import Loader
 
-from flask import (Flask, Blueprint, Response, flash, g, redirect, render_template,
+from flask import (Flask, Blueprint, Response, flash, g, jsonify, redirect, render_template,
                    request, session, url_for, send_from_directory)
 from systemd.daemon import notify
 
@@ -497,6 +497,170 @@ def run(options):
     def camera():
         return render_template('./camera.html', autoFocus=cam.autoFocusMode,
                                ir=cam.IRmode, wiper=cam.wiperMode)
+
+    # ---- REST API ----
+
+    def _cam_state():
+        return {
+            'camOn':      cam.camOn,
+            'autoFocus':  cam.autoFocusMode,
+            'autoIris':   cam.autoIrisMode,
+            'AGC':        cam.AGCmode,
+            'AWB':        cam.AWBmode,
+            'BLC':        cam.BLCmode,
+            'IR':         cam.IRmode,
+            'wiper':      cam.wiperMode,
+            'panSpeed':   cam.panSpeed,
+            'tiltSpeed':  cam.tiltSpeed,
+            'zoomSpeed':  cam.zoomSpeed,
+            'focusSpeed': cam.focusSpeed,
+        }
+
+    @app.route('/api/state')
+    def api_state():
+        return jsonify(_cam_state())
+
+    @app.route('/api/ir', methods=['GET', 'PUT'])
+    def api_ir():
+        if request.method == 'PUT':
+            body = request.get_json(silent=True) or {}
+            enabled = body.get('enabled')
+            if not isinstance(enabled, bool):
+                return jsonify({'error': 'enabled must be a boolean'}), 400
+            cam.irMode(enabled)
+        return jsonify({'enabled': cam.IRmode})
+
+    @app.route('/api/autofocus', methods=['GET', 'PUT'])
+    def api_autofocus():
+        if request.method == 'PUT':
+            body = request.get_json(silent=True) or {}
+            enabled = body.get('enabled')
+            if not isinstance(enabled, bool):
+                return jsonify({'error': 'enabled must be a boolean'}), 400
+            cam.autoFocus(enabled)
+        return jsonify({'enabled': cam.autoFocusMode})
+
+    @app.route('/api/autoiris', methods=['GET', 'PUT'])
+    def api_autoiris():
+        if request.method == 'PUT':
+            body = request.get_json(silent=True) or {}
+            enabled = body.get('enabled')
+            if not isinstance(enabled, bool):
+                return jsonify({'error': 'enabled must be a boolean'}), 400
+            cam.autoIris(enabled)
+        return jsonify({'enabled': cam.autoIrisMode})
+
+    @app.route('/api/agc', methods=['GET', 'PUT'])
+    def api_agc():
+        if request.method == 'PUT':
+            body = request.get_json(silent=True) or {}
+            enabled = body.get('enabled')
+            if not isinstance(enabled, bool):
+                return jsonify({'error': 'enabled must be a boolean'}), 400
+            cam.AGC(enabled)
+        return jsonify({'enabled': cam.AGCmode})
+
+    @app.route('/api/awb', methods=['GET', 'PUT'])
+    def api_awb():
+        if request.method == 'PUT':
+            body = request.get_json(silent=True) or {}
+            enabled = body.get('enabled')
+            if not isinstance(enabled, bool):
+                return jsonify({'error': 'enabled must be a boolean'}), 400
+            cam.AWB(enabled)
+        return jsonify({'enabled': cam.AWBmode})
+
+    @app.route('/api/blc', methods=['GET', 'PUT'])
+    def api_blc():
+        if request.method == 'PUT':
+            body = request.get_json(silent=True) or {}
+            enabled = body.get('enabled')
+            if not isinstance(enabled, bool):
+                return jsonify({'error': 'enabled must be a boolean'}), 400
+            cam.BLC(enabled)
+        return jsonify({'enabled': cam.BLCmode})
+
+    @app.route('/api/move', methods=['POST'])
+    def api_move():
+        body = request.get_json(silent=True) or {}
+        direction = body.get('direction')
+        if direction == 'Stop':
+            cam.stop()
+        elif direction in MOVE_FUNCS:
+            speed = body.get('speed', Speed.NORMAL)
+            if not isinstance(speed, int) or not (speed == Speed.TURBO or Speed.SLOW <= speed <= Speed.HIGH):
+                return jsonify({'error': 'speed must be an integer 0-63 or 255'}), 400
+            MOVE_FUNCS[direction](speed)
+        else:
+            return jsonify({'error': f'direction must be one of {list(MOVE_FUNCS.keys()) + ["Stop"]}'}), 400
+        return jsonify({'ok': True})
+
+    @app.route('/api/zoom', methods=['POST'])
+    def api_zoom():
+        body = request.get_json(silent=True) or {}
+        direction = body.get('direction')
+        if direction == 'Stop':
+            cam.stop()
+        elif direction in ('In', 'Out'):
+            cam.zoom(direction == 'In', 2)
+        else:
+            return jsonify({'error': 'direction must be In, Out, or Stop'}), 400
+        return jsonify({'ok': True})
+
+    @app.route('/api/zoomwide', methods=['POST'])
+    def api_zoomwide():
+        def do_zoom():
+            cam.zoom(False, 2)
+            time.sleep(5)
+            cam.stop()
+        threading.Thread(target=do_zoom, daemon=True).start()
+        return jsonify({'ok': True})
+
+    @app.route('/api/focus', methods=['POST'])
+    def api_focus():
+        body = request.get_json(silent=True) or {}
+        direction = body.get('direction')
+        if direction == 'Stop':
+            cam.stop()
+        elif direction in ('Near', 'Far'):
+            cam.focus(direction == 'Near', 2)
+        else:
+            return jsonify({'error': 'direction must be Near, Far, or Stop'}), 400
+        return jsonify({'ok': True})
+
+    @app.route('/api/iris', methods=['POST'])
+    def api_iris():
+        body = request.get_json(silent=True) or {}
+        direction = body.get('direction')
+        if direction == 'Stop':
+            cam.stop()
+        elif direction in ('Open', 'Close'):
+            cam.iris(direction == 'Open')
+        else:
+            return jsonify({'error': 'direction must be Open, Close, or Stop'}), 400
+        return jsonify({'ok': True})
+
+    @app.route('/api/home', methods=['POST'])
+    def api_home():
+        cam.home()
+        return jsonify({'ok': True})
+
+    @app.route('/api/wiper', methods=['POST'])
+    def api_wiper():
+        cam.wiper()
+        return jsonify({'ok': True})
+
+    @app.route('/api/preset', methods=['POST'])
+    def api_preset():
+        body = request.get_json(silent=True) or {}
+        command = body.get('command')
+        preset_id = body.get('id')
+        if command not in ('Set', 'Clear', 'Call'):
+            return jsonify({'error': 'command must be Set, Clear, or Call'}), 400
+        if not isinstance(preset_id, int) or not (0 <= preset_id <= 255):
+            return jsonify({'error': 'id must be an integer 0-255'}), 400
+        cam.preset(command, preset_id)
+        return jsonify({'ok': True})
 
     app.run(host="0.0.0.0", port="8080")
     logging.debug("Exiting")
